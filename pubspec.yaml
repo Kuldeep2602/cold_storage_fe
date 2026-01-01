@@ -1,0 +1,24 @@
+name: cold_storage_erp
+description: Backend API client scaffold (no UI).
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.2.2
+  http_parser: ^4.1.1
+  provider: ^6.1.2
+  shared_preferences: ^2.3.3
+  intl: ^0.19.0
+  file_picker: ^8.1.4
+  image_picker: ^1.0.7
+
+dev_dependencies:
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
