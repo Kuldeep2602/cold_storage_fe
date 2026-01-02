@@ -12,7 +12,7 @@ class PersonService {
 
   /// Search persons by query
   Future<List<Map<String, dynamic>>> searchPersons(String query) async {
-    final response = await _client.getJson('/api/inventory/persons/', queryParams: {'search': query});
+    final response = await _client.getJson('/api/inventory/persons/', query: {'search': query});
     return List<Map<String, dynamic>>.from(response);
   }
 

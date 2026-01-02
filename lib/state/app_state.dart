@@ -35,6 +35,7 @@ class AppState extends ChangeNotifier {
 
   bool get initialized => _initialized;
   String get baseUrl => _baseUrl;
+  ApiClient get client => _api;
   String? get accessToken => _accessToken;
   User? get user => _user;
   bool get isAuthenticated => (_accessToken ?? '').isNotEmpty;
