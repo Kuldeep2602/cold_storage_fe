@@ -6,11 +6,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
 import '../services/api_client.dart';
 import '../services/auth_service.dart';
+import '../services/dashboard_service.dart';
 import '../services/inventory_service.dart';
 import '../services/ledger_service.dart';
 import '../services/payments_service.dart';
+import '../services/staff_service.dart';
 import '../services/temperature_service.dart';
 import '../services/user_service.dart';
+import '../services/person_service.dart';
 import '../utils/default_base_url.dart';
 
 class AppState extends ChangeNotifier {
@@ -25,6 +28,26 @@ class AppState extends ChangeNotifier {
   late LedgerService ledger;
   late PaymentsService payments;
   late UserService users;
+  late StaffService staff;
+  late DashboardService dashboard;
+
+  AppState() {
+    _api = ApiClient(
+      baseUrl: defaultBaseUrl(),
+      onUnauthorized: logout,
+    );
+    auth = AuthService(_api);
+    inventory = InventoryService(_api);
+    temperature = TemperatureService(_api);
+    ledger = LedgerService(_api);
+    payments = PaymentsService(_api);
+    users = UserService(_api);
+    staff = StaffService(_api);
+    dashboard = DashboardService(_api);
+    persons = PersonService(_api);
+  }
+
+  late PersonService persons;
 
   String _baseUrl = defaultBaseUrl();
   String? _accessToken;
@@ -78,7 +101,10 @@ class AppState extends ChangeNotifier {
   }
 
   void _rebuildApi() {
-    _api = ApiClient(baseUrl: _baseUrl);
+    _api = ApiClient(
+      baseUrl: _baseUrl,
+      onUnauthorized: logout,
+    );
     _api.accessToken = _accessToken;
 
     auth = AuthService(_api);
@@ -87,6 +113,9 @@ class AppState extends ChangeNotifier {
     ledger = LedgerService(_api);
     payments = PaymentsService(_api);
     users = UserService(_api);
+    staff = StaffService(_api);
+    dashboard = DashboardService(_api);
+    persons = PersonService(_api);
   }
 
   Future<void> setBaseUrl(String value) async {
@@ -161,6 +190,13 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Clear the selected language (allows user to change language)
+  Future<void> clearSelectedLanguage() async {
+    _selectedLanguage = null;
+    await _prefs.remove('selectedLanguage');
+    notifyListeners();
+  }
+
   Future<void> logout() async {
     _accessToken = null;
     _refreshToken = null;
@@ -171,7 +207,6 @@ class AppState extends ChangeNotifier {
     await _prefs.remove('refreshToken');
     await _prefs.remove('userJson');
     // Don't remove selectedLanguage on logout
-
     notifyListeners();
   }
 }

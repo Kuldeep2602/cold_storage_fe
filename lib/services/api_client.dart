@@ -3,11 +3,13 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
+import 'package:flutter/foundation.dart';
 
 class ApiClient {
-  ApiClient({required this.baseUrl});
+  ApiClient({required this.baseUrl, this.onUnauthorized});
 
   final String baseUrl;
+  final VoidCallback? onUnauthorized;
   String? accessToken;
 
   Uri _uri(String path, [Map<String, String>? query]) {
@@ -25,6 +27,16 @@ class ApiClient {
     return headers;
   }
 
+  void _checkStatusCode(int statusCode, dynamic data) {
+    if (statusCode == 401) {
+      // If token is invalid/expired, trigger logout
+      onUnauthorized?.call();
+    }
+    if (statusCode < 200 || statusCode >= 300) {
+      throw ApiException(statusCode, data);
+    }
+  }
+
   Future<Map<String, dynamic>> putJson(String path, Map<String, dynamic> body,
       {Map<String, String>? query}) async {
     final resp = await http.put(
@@ -33,9 +45,7 @@ class ApiClient {
       body: jsonEncode(body),
     );
     final data = resp.body.isEmpty ? {} : jsonDecode(resp.body);
-    if (resp.statusCode < 200 || resp.statusCode >= 300) {
-      throw ApiException(resp.statusCode, data);
-    }
+    _checkStatusCode(resp.statusCode, data);
     return (data as Map).cast<String, dynamic>();
   }
 
@@ -47,9 +57,7 @@ class ApiClient {
       body: jsonEncode(body),
     );
     final data = resp.body.isEmpty ? {} : jsonDecode(resp.body);
-    if (resp.statusCode < 200 || resp.statusCode >= 300) {
-      throw ApiException(resp.statusCode, data);
-    }
+    _checkStatusCode(resp.statusCode, data);
     return (data as Map).cast<String, dynamic>();
   }
 
@@ -61,9 +69,7 @@ class ApiClient {
       body: jsonEncode(body),
     );
     final data = resp.body.isEmpty ? {} : jsonDecode(resp.body);
-    if (resp.statusCode < 200 || resp.statusCode >= 300) {
-      throw ApiException(resp.statusCode, data);
-    }
+    _checkStatusCode(resp.statusCode, data);
     return (data as Map).cast<String, dynamic>();
   }
 
@@ -104,19 +110,22 @@ class ApiClient {
     final streamed = await request.send();
     final resp = await http.Response.fromStream(streamed);
     final data = resp.body.isEmpty ? {} : jsonDecode(resp.body);
-    if (resp.statusCode < 200 || resp.statusCode >= 300) {
-      throw ApiException(resp.statusCode, data);
-    }
+    _checkStatusCode(resp.statusCode, data);
     return (data as Map).cast<String, dynamic>();
   }
 
   Future<dynamic> getJson(String path, {Map<String, String>? query}) async {
     final resp = await http.get(_uri(path, query), headers: _headers());
     final data = resp.body.isEmpty ? null : jsonDecode(resp.body);
-    if (resp.statusCode < 200 || resp.statusCode >= 300) {
-      throw ApiException(resp.statusCode, data);
-    }
+    _checkStatusCode(resp.statusCode, data);
     return data;
+  }
+  Future<Map<String, dynamic>> deleteJson(String path,
+      {Map<String, String>? query}) async {
+    final resp = await http.delete(_uri(path, query), headers: _headers());
+    final data = resp.body.isEmpty ? {} : jsonDecode(resp.body);
+    _checkStatusCode(resp.statusCode, data);
+    return (data as Map).cast<String, dynamic>();
   }
 }
 

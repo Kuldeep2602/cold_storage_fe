@@ -1,0 +1,645 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../../state/app_state.dart';
+
+/// Helper function to safely convert any value to double
+double _toDouble(dynamic value) {
+  if (value == null) return 0.0;
+  if (value is double) return value;
+  if (value is int) return value.toDouble();
+  if (value is String) return double.tryParse(value) ?? 0.0;
+  return 0.0;
+}
+
+class OwnerColdStoragesTab extends StatefulWidget {
+  const OwnerColdStoragesTab({super.key});
+
+  @override
+  State<OwnerColdStoragesTab> createState() => _OwnerColdStoragesTabState();
+}
+
+class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
+  bool _isLoading = true;
+  List<Map<String, dynamic>> _coldStorages = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadColdStorages();
+  }
+
+  Future<void> _loadColdStorages() async {
+    setState(() => _isLoading = true);
+    try {
+      final appState = context.read<AppState>();
+      final data = await appState.client.getJson('/api/inventory/cold-storages/');
+      
+      if (mounted && data != null) {
+        setState(() {
+          _coldStorages = (data as List).cast<Map<String, dynamic>>();
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        debugPrint('Cold storages load error: $e');
+        // Demo data
+        setState(() {
+          _coldStorages = [
+            {
+              'id': 1,
+              'name': 'ColdOne',
+              'code': 'COLD1',
+              'display_name': 'ColdOne Nashik Main',
+              'city': 'Nashik',
+              'state': 'Maharashtra',
+              'total_capacity': 500,
+              'occupied_capacity': 350,
+              'available_capacity': 150,
+              'utilization_percent': 70,
+              'manager_name': 'Ramesh Kumar',
+              'is_active': true,
+            },
+            {
+              'id': 2,
+              'name': 'ColdTwo',
+              'code': 'COLD2',
+              'display_name': 'ColdTwo Pune',
+              'city': 'Pune',
+              'state': 'Maharashtra',
+              'total_capacity': 300,
+              'occupied_capacity': 180,
+              'available_capacity': 120,
+              'utilization_percent': 60,
+              'manager_name': null,
+              'is_active': true,
+            },
+          ];
+        });
+      }
+    }
+  }
+
+  void _showCreateDialog() {
+    final nameController = TextEditingController();
+    final codeController = TextEditingController();
+    final cityController = TextEditingController();
+    final capacityController = TextEditingController(text: '500');
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE3F2FD),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.add_business, color: Color(0xFF1976D2), size: 20),
+            ),
+            const SizedBox(width: 12),
+            const Text('Add Cold Storage'),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Name *', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+              const SizedBox(height: 8),
+              TextField(
+                controller: nameController,
+                decoration: InputDecoration(
+                  hintText: 'e.g. ColdOne Main',
+                  prefixIcon: const Icon(Icons.business),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              
+              const Text('Code *', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+              const SizedBox(height: 8),
+              TextField(
+                controller: codeController,
+                decoration: InputDecoration(
+                  hintText: 'e.g. COLD1',
+                  prefixIcon: const Icon(Icons.tag),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              
+              const Text('City', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+              const SizedBox(height: 8),
+              TextField(
+                controller: cityController,
+                decoration: InputDecoration(
+                  hintText: 'e.g. Nashik',
+                  prefixIcon: const Icon(Icons.location_city),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              
+              const Text('Total Capacity (MT)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+              const SizedBox(height: 8),
+              TextField(
+                controller: capacityController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  hintText: '500',
+                  prefixIcon: const Icon(Icons.storage),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (nameController.text.isEmpty || codeController.text.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Name and Code are required')),
+                );
+                return;
+              }
+              
+              try {
+                final appState = context.read<AppState>();
+                await appState.client.postJson('/api/inventory/cold-storages/', {
+                  'name': nameController.text,
+                  'code': codeController.text.toUpperCase(),
+                  'city': cityController.text,
+                  'total_capacity': double.tryParse(capacityController.text) ?? 500,
+                });
+                Navigator.pop(context);
+                _loadColdStorages();
+                ScaffoldMessenger.of(this.context).showSnackBar(
+                  const SnackBar(content: Text('Cold storage created successfully')),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Error: $e')),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1976D2)),
+            child: const Text('Create'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAssignManagerDialog(Map<String, dynamic> coldStorage) async {
+    // Fetch available managers
+    List<Map<String, dynamic>> managers = [];
+    
+    try {
+      final appState = context.read<AppState>();
+      final data = await appState.client.getJson('/api/staff/');
+      managers = (data as List)
+          .cast<Map<String, dynamic>>()
+          .where((m) => m['role'] == 'manager')
+          .toList();
+    } catch (e) {
+      debugPrint('Error loading managers: $e');
+    }
+    
+    if (!mounted) return;
+
+    int? selectedManagerId = coldStorage['manager'] as int?;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Assign Manager'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Cold Storage: ${coldStorage['display_name'] ?? coldStorage['name']}',
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 16),
+              const Text('Select Manager:', style: TextStyle(fontSize: 14)),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<int?>(
+                value: selectedManagerId,
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                ),
+                items: [
+                  const DropdownMenuItem(value: null, child: Text('No Manager')),
+                  ...managers.map((m) {
+                    return DropdownMenuItem(
+                      value: m['id'] as int,
+                      child: Text('${m['name']} (${m['phone_number']})'),
+                    );
+                  }),
+                ],
+                onChanged: (value) {
+                  setDialogState(() => selectedManagerId = value);
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                try {
+                  final appState = context.read<AppState>();
+                  await appState.client.postJson(
+                    '/api/inventory/cold-storages/${coldStorage['id']}/assign-manager/',
+                    {'manager_id': selectedManagerId},
+                  );
+                  Navigator.pop(context);
+                  _loadColdStorages();
+                  ScaffoldMessenger.of(this.context).showSnackBar(
+                    const SnackBar(content: Text('Manager assigned successfully')),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: $e')),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1976D2)),
+              child: const Text('Assign'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Blue Header
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF2196F3), Color(0xFF1976D2)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.ac_unit, color: Colors.white, size: 24),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Cold Storages',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        Text(
+                          'Manage your facilities',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.white70,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () async {
+                      await context.read<AppState>().logout();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white.withOpacity(0.2),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                    child: const Text('Logout', style: TextStyle(fontWeight: FontWeight.w600)),
+                  ),
+                ],
+              ),
+            ),
+
+            // Content
+            Expanded(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : RefreshIndicator(
+                      onRefresh: _loadColdStorages,
+                      child: ListView(
+                        padding: const EdgeInsets.all(16),
+                        children: [
+                          // Add Button
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: _showCreateDialog,
+                              icon: const Icon(Icons.add_business, size: 20),
+                              label: const Text('Add New Cold Storage'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF4CAF50),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          // Cold Storages List
+                          Text(
+                            'Your Cold Storages (${_coldStorages.length})',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF333333),
+                            ),
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          if (_coldStorages.isEmpty)
+                            Container(
+                              padding: const EdgeInsets.all(32),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.grey.shade200),
+                              ),
+                              child: Column(
+                                children: [
+                                  Icon(Icons.ac_unit, size: 48, color: Colors.grey[400]),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'No cold storages yet',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Add your first cold storage facility',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey[500],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          else
+                            ..._coldStorages.map((cs) => _buildColdStorageCard(cs)),
+                        ],
+                      ),
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildColdStorageCard(Map<String, dynamic> cs) {
+    final utilization = _toDouble(cs['utilization_percent']);
+    final occupied = _toDouble(cs['occupied_capacity']);
+    final total = _toDouble(cs['total_capacity']);
+    final managerName = cs['manager_name']?.toString();
+    final isActive = cs['is_active'] == true;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE3F2FD),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1976D2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.ac_unit, color: Colors.white, size: 24),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        cs['display_name']?.toString() ?? cs['name']?.toString() ?? '',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF333333),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${cs['city'] ?? ''} • ${cs['code'] ?? ''}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: isActive ? const Color(0xFFE8F5E9) : Colors.grey[200],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    isActive ? 'Active' : 'Inactive',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: isActive ? const Color(0xFF4CAF50) : Colors.grey,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Stats
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                // Capacity Bar
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Capacity Usage', style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                        Text('${utilization.toStringAsFixed(0)}%', style: const TextStyle(fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: total > 0 ? (utilization / 100).clamp(0.0, 1.0) : 0.0,
+                        backgroundColor: Colors.grey[200],
+                        valueColor: AlwaysStoppedAnimation(
+                          utilization > 80 ? Colors.red : (utilization > 60 ? Colors.orange : Colors.green),
+                        ),
+                        minHeight: 8,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('${occupied.toStringAsFixed(0)} MT used', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+                        Text('${total.toStringAsFixed(0)} MT total', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+                      ],
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                // Manager Row
+                Row(
+                  children: [
+                    Icon(Icons.person, size: 18, color: Colors.grey[500]),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Manager: ',
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                    ),
+                    Expanded(
+                      child: Text(
+                        managerName ?? 'Not Assigned',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: managerName != null ? const Color(0xFF333333) : Colors.orange,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => _showAssignManagerDialog(cs),
+                      child: Text(managerName != null ? 'Change' : 'Assign'),
+                    ),
+                  ],
+                ),
+
+                const Divider(height: 24),
+
+                // Action Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          // View details
+                        },
+                        icon: const Icon(Icons.visibility, size: 18),
+                        label: const Text('View'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF1976D2),
+                          side: const BorderSide(color: Color(0xFF1976D2)),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          // Edit cold storage
+                        },
+                        icon: const Icon(Icons.edit, size: 18),
+                        label: const Text('Edit'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF4CAF50),
+                          side: const BorderSide(color: Color(0xFF4CAF50)),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

@@ -3,8 +3,9 @@ import 'package:provider/provider.dart';
 
 import 'inventory/inventory_screen.dart';
 import 'ledger/ledger_screen.dart';
-import 'manager/manager_menu_screen.dart';
+import 'manager/manager_dashboard_screen.dart';
 import 'operator/operator_menu_screen.dart';
+import 'owner/owner_dashboard_screen.dart';
 import 'payments/payments_screen.dart';
 import 'profile/profile_screen.dart';
 import 'technician/technician_menu_screen.dart';
@@ -25,20 +26,30 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
     
-    // Route to role-specific screens
-    if (appState.user?.isOperator ?? false) {
+    // Route based on user role
+    final userRole = appState.user?.role;
+    
+    // Operators get operator menu
+    if (userRole == 'operator') {
       return const OperatorMenuScreen();
     }
     
-    if (appState.user?.isTechnician ?? false) {
+    // Technicians get technician menu
+    if (userRole == 'technician') {
       return const TechnicianMenuScreen();
     }
     
-    if (appState.user?.isManager ?? false) {
-      return const ManagerMenuScreen();
+    // Managers get manager dashboard
+    if (userRole == 'manager') {
+      return const ManagerDashboardScreen();
     }
     
-    // Owner and Admin get full navigation
+    // Owners and Admins get owner dashboard (multi-cold-storage management)
+    if (userRole == 'owner' || userRole == 'admin') {
+      return const OwnerDashboardScreen();
+    }
+    
+    // Fallback for users without specific roles - show basic navigation
     final screens = <Widget>[
       const InventoryScreen(),
       const TemperatureScreen(),

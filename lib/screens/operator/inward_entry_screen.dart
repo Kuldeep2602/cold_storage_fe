@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
+import 'dart:typed_data';
 
 import '../../services/person_service.dart';
 import '../../state/app_state.dart';
@@ -17,6 +19,7 @@ class InwardEntryScreen extends StatefulWidget {
 class _InwardEntryScreenState extends State<InwardEntryScreen> {
   final _formKey = GlobalKey<FormState>();
   final _searchController = TextEditingController();
+  TextEditingController? _autocompleteController;
   final _cropNameController = TextEditingController();
   final _cropVarietyController = TextEditingController();
   final _quantityController = TextEditingController();
@@ -28,6 +31,7 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
   String? _selectedStorageRoom;
   DateTime _selectedDate = DateTime.now();
   File? _selectedImage;
+  Uint8List? _webImageBytes;
   bool _isLoading = false;
 
   final List<String> _qualityGrades = ['A', 'B', 'C'];
@@ -42,13 +46,23 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
   ];
 
   Future<void> _pickImage(ImageSource source) async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: source);
-    
-    if (pickedFile != null) {
-      setState(() {
-        _selectedImage = File(pickedFile.path);
-      });
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: source);
+      
+      if (pickedFile != null) {
+        final bytes = await pickedFile.readAsBytes();
+        setState(() {
+          _selectedImage = File(pickedFile.path);
+          _webImageBytes = bytes;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error picking image: $e')),
+        );
+      }
     }
   }
 
@@ -87,20 +101,51 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
     try {
       final appState = context.read<AppState>();
       
-      // TODO: Implement actual API call
-      await Future.delayed(const Duration(seconds: 1));
+      // Map unit to packaging type
+      String packagingType = 'bori';
+      if (_selectedUnit == 'Crates') {
+        packagingType = 'crate';
+      } else if (_selectedUnit == 'Bags') {
+        packagingType = 'bori';
+      } else {
+        packagingType = 'box'; // MT treated as box for now
+      }
+
+      // Parse duration
+      int? durationDays;
+      if (_durationController.text.isNotEmpty) {
+        durationDays = int.tryParse(_durationController.text);
+      }
+
+      await appState.inventory.createInwardEntry(
+        personId: int.parse(_selectedPersonId!),
+        cropName: _cropNameController.text.trim(),
+        cropVariety: _cropVarietyController.text.trim(),
+        quantity: _quantityController.text.trim(),
+        packagingType: packagingType,
+        qualityGrade: _selectedQualityGrade,
+        storageRoom: _selectedStorageRoom!,
+        expectedStorageDurationDays: durationDays,
+        imageFile: _selectedImage,
+      );
       
       if (!mounted) return;
       
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Inward entry saved successfully!')),
+        const SnackBar(
+          content: Text('Inward entry saved successfully!'),
+          backgroundColor: Colors.green,
+        ),
       );
       
-      Navigator.pop(context);
+      Navigator.pop(context, true); // Return true to indicate success
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -188,15 +233,66 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          TextFormField(
-                            controller: _searchController,
-                            decoration: InputDecoration(
-                              hintText: 'Search by name or phone',
-                              prefixIcon: const Icon(Icons.search),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
+                          Autocomplete<Map<String, dynamic>>(
+                            optionsBuilder: (TextEditingValue textEditingValue) async {
+                              if (textEditingValue.text.isEmpty) {
+                                return const Iterable<Map<String, dynamic>>.empty();
+                              }
+                              try {
+                                return await context.read<AppState>().persons.searchPersons(textEditingValue.text);
+                              } catch (e) {
+                                debugPrint('Search error: $e');
+                                return const Iterable<Map<String, dynamic>>.empty();
+                              }
+                            },
+                            displayStringForOption: (option) => option['name'] ?? '',
+                            onSelected: (Map<String, dynamic> selection) {
+                              setState(() {
+                                _selectedPersonId = selection['id'].toString();
+                                _searchController.text = selection['name'];
+                              });
+                            },
+                            fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
+                              _autocompleteController = controller;
+                              return TextFormField(
+                                controller: controller,
+                                focusNode: focusNode,
+                                onEditingComplete: onEditingComplete,
+                                decoration: InputDecoration(
+                                  hintText: 'Search by name or phone',
+                                  prefixIcon: const Icon(Icons.search),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                              );
+                            },
+                            optionsViewBuilder: (context, onSelected, options) {
+                              return Align(
+                                alignment: Alignment.topLeft,
+                                child: Material(
+                                  elevation: 4,
+                                  child: ConstrainedBox(
+                                    constraints: BoxConstraints(maxHeight: 200, maxWidth: MediaQuery.of(context).size.width - 72), // Adjust width based on padding
+                                    child: ListView.builder(
+                                      padding: EdgeInsets.zero,
+                                      shrinkWrap: true,
+                                      itemCount: options.length,
+                                      itemBuilder: (BuildContext context, int index) {
+                                        final option = options.elementAt(index);
+                                        return ListTile(
+                                          title: Text(option['name'] ?? 'Unknown'),
+                                          subtitle: Text(option['mobile_number'] ?? 'No phone'),
+                                          onTap: () {
+                                            onSelected(option);
+                                          },
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                           const SizedBox(height: 12),
                           OutlinedButton.icon(
@@ -225,7 +321,7 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
                               if (result != null) {
                                 setState(() {
                                   _selectedPersonId = result['id'].toString();
-                                  _searchController.text = result['name'];
+                                  _autocompleteController?.text = result['name'];
                                 });
                                 
                                 if (!mounted) return;
@@ -358,15 +454,21 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
                           if (_selectedImage != null)
                             Stack(
                               children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.file(
-                                    _selectedImage!,
-                                    height: 200,
-                                    width: double.infinity,
-                                    fit: BoxFit.cover,
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: _webImageBytes != null
+                                        ? Image.memory(
+                                            _webImageBytes!,
+                                            height: 200,
+                                            width: double.infinity,
+                                            fit: BoxFit.cover,
+                                          )
+                                        : Container(
+                                            height: 200,
+                                            color: Colors.grey[200],
+                                            child: const Icon(Icons.image, size: 50, color: Colors.grey),
+                                          ),
                                   ),
-                                ),
                                 Positioned(
                                   right: 8,
                                   top: 8,

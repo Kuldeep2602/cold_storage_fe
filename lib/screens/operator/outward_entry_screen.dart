@@ -12,38 +12,56 @@ class OutwardEntryScreen extends StatefulWidget {
 
 class _OutwardEntryScreenState extends State<OutwardEntryScreen> {
   final _searchController = TextEditingController();
+  final _quantityController = TextEditingController();
   bool _isLoading = false;
+  bool _isSubmitting = false;
   List<Map<String, dynamic>> _searchResults = [];
+
+  @override
+  void initState() {
+    super.initState();
+    // Load all inventory on start
+    _loadAllInventory();
+  }
+
+  Future<void> _loadAllInventory() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final appState = context.read<AppState>();
+      final data = await appState.inventory.fetchStock();
+      
+      if (mounted && data != null) {
+        setState(() {
+          _searchResults = (data as List).cast<Map<String, dynamic>>();
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading inventory: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   Future<void> _searchInventory() async {
     final query = _searchController.text.trim();
-    if (query.isEmpty) return;
 
     setState(() => _isLoading = true);
 
     try {
-      // TODO: Implement actual API call
-      await Future.delayed(const Duration(seconds: 1));
+      final appState = context.read<AppState>();
+      final data = await appState.inventory.fetchStock(
+        search: query.isEmpty ? null : query,
+      );
       
-      // Mock data for now
-      setState(() {
-        _searchResults = [
-          {
-            'id': '1',
-            'party': 'Ramesh Kumar',
-            'crop': 'Potato',
-            'quantity': '50 MT',
-            'room': 'Room 1',
-          },
-          {
-            'id': '2',
-            'party': 'Suresh Patel',
-            'crop': 'Onion',
-            'quantity': '30 MT',
-            'room': 'Cold Storage A',
-          },
-        ];
-      });
+      if (mounted && data != null) {
+        setState(() {
+          _searchResults = (data as List).cast<Map<String, dynamic>>();
+        });
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -51,6 +69,113 @@ class _OutwardEntryScreenState extends State<OutwardEntryScreen> {
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _showOutwardDialog(Map<String, dynamic> item) async {
+    _quantityController.clear();
+    final remainingQty = double.tryParse(item['remaining_quantity']?.toString() ?? '0') ?? 0;
+    
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Outward: ${item['crop_name'] ?? 'Unknown'}'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Party: ${item['person_name'] ?? 'Unknown'}'),
+            Text('Available: ${remainingQty.toStringAsFixed(2)} ${item['packaging_type'] ?? ''}'),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _quantityController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Quantity to remove',
+                border: OutlineInputBorder(),
+                hintText: 'Enter quantity',
+              ),
+              autofocus: true,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFF9800),
+            ),
+            child: const Text('Confirm Outward'),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true) {
+      await _processOutward(item);
+    }
+  }
+
+  Future<void> _processOutward(Map<String, dynamic> item) async {
+    final quantity = double.tryParse(_quantityController.text.trim());
+    final remainingQty = double.tryParse(item['remaining_quantity']?.toString() ?? '0') ?? 0;
+    
+    if (quantity == null || quantity <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a valid quantity')),
+      );
+      return;
+    }
+
+    if (quantity > remainingQty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Quantity exceeds available stock ($remainingQty)')),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final appState = context.read<AppState>();
+      final result = await appState.inventory.createOutwardEntry(
+        inwardEntryId: item['id'],
+        quantity: quantity.toString(),
+        packagingType: item['packaging_type'] ?? 'bori',
+      );
+
+      if (!mounted) return;
+
+      // Show success with receipt number
+      final receiptNumber = result['receipt_number'] ?? 'N/A';
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Outward recorded! Receipt: $receiptNumber'),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+
+      // Refresh the list
+      await _searchInventory();
+      
+      // Return true to indicate changes were made
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
@@ -78,12 +203,12 @@ class _OutwardEntryScreenState extends State<OutwardEntryScreen> {
                   Expanded(
                     child: Row(
                       children: [
-                        const Icon(
+                        /*const Icon(
                           Icons.arrow_upward_rounded,
                           color: Colors.white,
                           size: 28,
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 12),*/
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: const [
@@ -127,117 +252,163 @@ class _OutwardEntryScreenState extends State<OutwardEntryScreen> {
 
             // Content
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.all(20),
-                children: [
-                  // Section 1: Select Booking / Party
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      border: Border.all(color: const Color(0xFFE0E0E0)),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+              child: _isSubmitting 
+                ? const Center(
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text(
-                          '1. Select Booking / Party',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF333333),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        const Text(
-                          'Search Stored Inventory',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF333333),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: _searchController,
-                          decoration: InputDecoration(
-                            hintText: 'Search by party, phone, or crop',
-                            hintStyle: const TextStyle(color: Color(0xFF999999)),
-                            prefixIcon: const Icon(Icons.search, color: Color(0xFF999999)),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: const BorderSide(color: Color(0xFFFF9800)),
-                            ),
-                          ),
-                          onSubmitted: (_) => _searchInventory(),
-                        ),
+                        CircularProgressIndicator(),
+                        SizedBox(height: 16),
+                        Text('Processing outward entry...'),
                       ],
                     ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Search Results or Empty State
-                  if (_isLoading)
-                    const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(40),
-                        child: CircularProgressIndicator(),
-                      ),
-                    )
-                  else if (_searchResults.isEmpty)
-                    Container(
-                      padding: const EdgeInsets.all(40),
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.inventory_2_outlined,
-                            size: 80,
-                            color: Colors.grey.shade300,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Search and select inventory to proceed',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey.shade600,
+                  )
+                : ListView(
+                    padding: const EdgeInsets.all(20),
+                    children: [
+                      // Section 1: Select Booking / Party
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(color: const Color(0xFFE0E0E0)),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              '1. Select Booking / Party',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF333333),
+                              ),
                             ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    )
-                  else
-                    Column(
-                      children: [
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              'Available Inventory',
+                            const SizedBox(height: 20),
+                            const Text(
+                              'Search Stored Inventory',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
                                 color: Color(0xFF333333),
                               ),
                             ),
-                          ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _searchController,
+                              decoration: InputDecoration(
+                                hintText: 'Search by party, phone, or crop',
+                                hintStyle: const TextStyle(color: Color(0xFF999999)),
+                                prefixIcon: const Icon(Icons.search, color: Color(0xFF999999)),
+                                suffixIcon: IconButton(
+                                  icon: const Icon(Icons.clear),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    _loadAllInventory();
+                                  },
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: const BorderSide(color: Color(0xFFFF9800)),
+                                ),
+                              ),
+                              onSubmitted: (_) => _searchInventory(),
+                              onChanged: (value) {
+                                if (value.isEmpty) {
+                                  _loadAllInventory();
+                                }
+                              },
+                            ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: _searchInventory,
+                                icon: const Icon(Icons.search),
+                                label: const Text('Search'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFFF9800),
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        ..._searchResults.map((result) => _buildInventoryCard(result)).toList(),
-                      ],
-                    ),
-                ],
-              ),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Search Results or Empty State
+                      if (_isLoading)
+                        const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(40),
+                            child: CircularProgressIndicator(),
+                          ),
+                        )
+                      else if (_searchResults.isEmpty)
+                        Container(
+                          padding: const EdgeInsets.all(40),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.inventory_2_outlined,
+                                size: 80,
+                                color: Colors.grey.shade300,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No inventory found',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey.shade600,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        )
+                      else
+                        Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text(
+                                    'Available Inventory',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF333333),
+                                    ),
+                                  ),
+                                  Text(
+                                    '${_searchResults.length} items',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            ..._searchResults.map((result) => _buildInventoryCard(result)).toList(),
+                          ],
+                        ),
+                    ],
+                  ),
             ),
           ],
         ),
@@ -246,6 +417,12 @@ class _OutwardEntryScreenState extends State<OutwardEntryScreen> {
   }
 
   Widget _buildInventoryCard(Map<String, dynamic> item) {
+    final cropName = item['crop_name'] ?? 'Unknown';
+    final personName = item['person_name'] ?? 'Unknown';
+    final remainingQty = double.tryParse(item['remaining_quantity']?.toString() ?? '0') ?? 0;
+    final storageRoom = item['storage_room'] ?? item['cold_storage_name'] ?? 'N/A';
+    final packagingType = item['packaging_type'] ?? '';
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
@@ -253,12 +430,7 @@ class _OutwardEntryScreenState extends State<OutwardEntryScreen> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: InkWell(
-        onTap: () {
-          // TODO: Navigate to quantity selection screen
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Selected: ${item['crop']} from ${item['party']}')),
-          );
-        },
+        onTap: () => _showOutwardDialog(item),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -283,7 +455,7 @@ class _OutwardEntryScreenState extends State<OutwardEntryScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      item['crop'],
+                      cropName,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -292,7 +464,7 @@ class _OutwardEntryScreenState extends State<OutwardEntryScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Party: ${item['party']}',
+                      'Party: $personName',
                       style: const TextStyle(
                         fontSize: 14,
                         color: Color(0xFF666666),
@@ -302,7 +474,7 @@ class _OutwardEntryScreenState extends State<OutwardEntryScreen> {
                     Row(
                       children: [
                         Text(
-                          'Available: ${item['quantity']}',
+                          'Available: ${remainingQty.toStringAsFixed(2)} $packagingType',
                           style: const TextStyle(
                             fontSize: 13,
                             color: Color(0xFF999999),
@@ -316,7 +488,7 @@ class _OutwardEntryScreenState extends State<OutwardEntryScreen> {
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            item['room'],
+                            storageRoom,
                             style: const TextStyle(
                               fontSize: 12,
                               color: Color(0xFF1976D2),
@@ -342,6 +514,7 @@ class _OutwardEntryScreenState extends State<OutwardEntryScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _quantityController.dispose();
     super.dispose();
   }
 }

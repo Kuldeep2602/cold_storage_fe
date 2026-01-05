@@ -56,7 +56,7 @@ class _InwardsTabState extends State<InwardsTab> {
     final sizeGrade = TextEditingController();
     final quantity = TextEditingController();
     String packagingType = 'bori';
-    int qualityRating = 3;
+    String qualityGrade = 'A';
     final rackNumber = TextEditingController();
 
     File? image;
@@ -77,7 +77,7 @@ class _InwardsTabState extends State<InwardsTab> {
           sizeGrade: sizeGrade.text.trim(),
           quantity: quantity.text.trim(),
           packagingType: packagingType,
-          qualityRating: qualityRating,
+          qualityGrade: qualityGrade,
           rackNumber: rackNumber.text.trim(),
           imageFile: image,
         );
@@ -143,17 +143,15 @@ class _InwardsTabState extends State<InwardsTab> {
                     decoration: const InputDecoration(labelText: 'Packaging type', border: OutlineInputBorder()),
                   ),
                   const SizedBox(height: 8),
-                  DropdownButtonFormField<int>(
-                    value: qualityRating,
+                  DropdownButtonFormField<String>(
+                    value: qualityGrade,
                     items: const [
-                      DropdownMenuItem(value: 1, child: Text('1')),
-                      DropdownMenuItem(value: 2, child: Text('2')),
-                      DropdownMenuItem(value: 3, child: Text('3')),
-                      DropdownMenuItem(value: 4, child: Text('4')),
-                      DropdownMenuItem(value: 5, child: Text('5')),
+                      DropdownMenuItem(value: 'A', child: Text('Grade A')),
+                      DropdownMenuItem(value: 'B', child: Text('Grade B')),
+                      DropdownMenuItem(value: 'C', child: Text('Grade C')),
                     ],
-                    onChanged: (v) => setSheetState(() => qualityRating = v ?? 3),
-                    decoration: const InputDecoration(labelText: 'Quality rating (1-5)', border: OutlineInputBorder()),
+                    onChanged: (v) => setSheetState(() => qualityGrade = v ?? 'A'),
+                    decoration: const InputDecoration(labelText: 'Quality Grade', border: OutlineInputBorder()),
                   ),
                   const SizedBox(height: 8),
                   TextField(controller: rackNumber, decoration: const InputDecoration(labelText: 'Rack number (optional)')),
