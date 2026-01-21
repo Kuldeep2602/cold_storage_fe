@@ -64,10 +64,9 @@ class _ManagerDashboardTabState extends State<ManagerDashboardTab> {
     final staffCount = _dashboardData?['staff_count'] ?? 0;
     final storageNames = (_dashboardData?['assigned_storage_names'] as List?)?.join(', ') ?? '';
     
-    // Check if no storage is assigned
-    // We assume if 'storage' stats are all 0 and message is present, or explicit check
+    // Check if storage is assigned - use assigned_storages from API
     final hasStorage = _dashboardData != null && 
-                       (_dashboardData!['cold_storages'] as List?)?.isNotEmpty == true;
+                       (_dashboardData!['assigned_storages'] as List?)?.isNotEmpty == true;
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -164,7 +163,7 @@ class _ManagerDashboardTabState extends State<ManagerDashboardTab> {
                                            size: 80, color: Colors.grey[400]),
                                       const SizedBox(height: 16),
                                       Text(
-                                        'No Cold Storage Assigned',
+                                        'No Storage Assigned',
                                         style: TextStyle(
                                           fontSize: 20,
                                           fontWeight: FontWeight.bold,

@@ -5,13 +5,11 @@ class AuthService {
 
   final ApiClient _api;
 
-  /// Signup a new user with phone number and role (also sends OTP)
-  Future<Map<String, dynamic>> signup(String phoneNumber, {String? role}) {
-    final body = {'phone_number': phoneNumber};
-    if (role != null && role.isNotEmpty) {
-      body['role'] = role;
-    }
-    return _api.postJson('/api/auth/signup/', body);
+  /// Signup a new user with phone number (also sends OTP)
+  Future<Map<String, dynamic>> signup(String phoneNumber) {
+    return _api.postJson('/api/auth/signup/', {
+      'phone_number': phoneNumber,
+    });
   }
 
   Future<Map<String, dynamic>> requestOtp(String phoneNumber) {

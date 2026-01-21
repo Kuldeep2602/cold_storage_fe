@@ -7,7 +7,10 @@ import 'dart:typed_data';
 
 import '../../services/person_service.dart';
 import '../../state/app_state.dart';
+import '../../models/user.dart'; // Add this
 import '../../widgets/register_party_dialog.dart';
+import '../../services/receipt_service.dart';
+
 
 class InwardEntryScreen extends StatefulWidget {
   const InwardEntryScreen({super.key});
@@ -22,10 +25,12 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
   TextEditingController? _autocompleteController;
   final _cropNameController = TextEditingController();
   final _cropVarietyController = TextEditingController();
+  final _sizeController = TextEditingController();
   final _quantityController = TextEditingController();
-  final _durationController = TextEditingController();
+  final _durationController = TextEditingController(text: '365'); // Default 365 days
   
-  String? _selectedPersonId;
+  Map<String, dynamic>? _selectedParty;
+  String? get _selectedPersonId => _selectedParty?['id']?.toString();
   String _selectedQualityGrade = 'A';
   String _selectedUnit = 'MT';
   String? _selectedStorageRoom;
@@ -36,14 +41,56 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
 
   final List<String> _qualityGrades = ['A', 'B', 'C'];
   final List<String> _units = ['MT', 'Bags', 'Crates'];
-  final List<String> _storageRooms = [
-    'Room 1',
-    'Room 2',
-    'Room 3',
-    'Room 4',
-    'Cold Storage A',
-    'Cold Storage B',
-  ];
+  
+  List<String> _storageRooms = [];
+  int? _assignedColdStorageId;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadAssignedStorage();
+    });
+  }
+
+  void _loadAssignedStorage() {
+    final appState = context.read<AppState>();
+    final user = appState.user;
+    
+    if (user != null && user.assignedStorages.isNotEmpty) {
+      if (mounted) {
+        setState(() {
+            // Default to first storage
+            final storage = user.assignedStorages.first;
+            _assignedColdStorageId = storage.id;
+            _storageRooms = storage.rooms.map((r) => r.roomName).toList();
+            _selectedStorageRoom = null; // Reset room selection
+        });
+      }
+    } else {
+        if (mounted) {
+            setState(() {
+                _storageRooms = []; 
+                _assignedColdStorageId = null;
+            });
+        }
+    }
+  }
+
+  void _onStorageChanged(int? storageId) {
+      if (storageId == null) return;
+      final appState = context.read<AppState>();
+      final user = appState.user;
+      
+      final storage = user?.assignedStorages.firstWhere((s) => s.id == storageId);
+      if (storage != null) {
+          setState(() {
+              _assignedColdStorageId = storageId;
+              _storageRooms = storage.rooms.map((r) => r.roomName).toList();
+              _selectedStorageRoom = null;
+          });
+      }
+  }
 
   Future<void> _pickImage(ImageSource source) async {
     try {
@@ -96,6 +143,21 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
       return;
     }
 
+    // Check if cold storage is assigned
+    if (_assignedColdStorageId == null) {
+        // Try to reload or warn
+        // If the user has assignedStorages but state lost?
+        final appState = context.read<AppState>();
+        if (appState.user?.assignedStorages.isNotEmpty == true) {
+             _assignedColdStorageId = appState.user!.assignedStorages.first.id;
+        } else {
+             ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Error: No Storage assigned to this operator.')),
+             );
+             return;
+        }
+    }
+
     setState(() => _isLoading = true);
 
     try {
@@ -117,28 +179,85 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
         durationDays = int.tryParse(_durationController.text);
       }
 
-      await appState.inventory.createInwardEntry(
+      final response = await appState.inventory.createInwardEntry(
         personId: int.parse(_selectedPersonId!),
         cropName: _cropNameController.text.trim(),
         cropVariety: _cropVarietyController.text.trim(),
+        sizeGrade: _sizeController.text.trim(),
         quantity: _quantityController.text.trim(),
         packagingType: packagingType,
         qualityGrade: _selectedQualityGrade,
         storageRoom: _selectedStorageRoom!,
         expectedStorageDurationDays: durationDays,
+        coldStorageId: _assignedColdStorageId,
         imageFile: _selectedImage,
       );
       
       if (!mounted) return;
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Inward entry saved successfully!'),
-          backgroundColor: Colors.green,
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.green),
+              SizedBox(width: 10),
+              Text('Entry Saved'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+               const Text('Inward entry has been successfully recorded.'),
+               const SizedBox(height: 20),
+               SizedBox(
+                 width: double.infinity,
+                 child: ElevatedButton.icon(
+                   icon: const Icon(Icons.download),
+                   label: const Text('Download Receipt'),
+                   style: ElevatedButton.styleFrom(
+                     backgroundColor: Colors.blue,
+                     foregroundColor: Colors.white,
+                   ),
+                   onPressed: () {
+                      final user = context.read<AppState>().user;
+                      final storage = user?.assignedStorages.firstWhere(
+                          (s) => s.id == _assignedColdStorageId, 
+                          orElse: () => user.assignedStorages.first
+                      );
+
+                      ReceiptService.generateInwardReceipt(
+                          entryData: {
+                              'receipt_number': response['receipt_number'] ?? response['id']?.toString(),
+                              'party_name': _selectedParty?['name'],
+                              'party_phone': _selectedParty?['mobile_number'],
+                              'crop_name': _cropNameController.text,
+                              'quantity': _quantityController.text,
+                              'unit': _selectedUnit,
+                              'room': _selectedStorageRoom,
+                              'variety': _cropVarietyController.text,
+                              'grade': _selectedQualityGrade,
+                          },
+                          storageName: storage?.displayName ?? 'Storage',
+                          userName: user?.name ?? 'Operator',
+                      );
+                   },
+                 ),
+               )
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                  Navigator.pop(context); // Close dialog
+                  Navigator.pop(context, true); // Close screen
+              },
+              child: const Text('Close'),
+            ),
+          ],
         ),
       );
-      
-      Navigator.pop(context, true); // Return true to indicate success
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -176,8 +295,8 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text(
+                      children: [
+                        const Text(
                           'Inward Entry',
                           style: TextStyle(
                             fontSize: 20,
@@ -185,7 +304,12 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
                             color: Colors.white,
                           ),
                         ),
-                        Text(
+                         // Display assigned storage name check
+                        if (_assignedColdStorageId != null)
+                             // We don't have name handy easily unless we store the object.
+                             // But it's fine.
+                             const SizedBox.shrink(),
+                        const Text(
                           'Stock loading entry',
                           style: TextStyle(
                             fontSize: 14,
@@ -233,66 +357,145 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          Autocomplete<Map<String, dynamic>>(
-                            optionsBuilder: (TextEditingValue textEditingValue) async {
-                              if (textEditingValue.text.isEmpty) {
-                                return const Iterable<Map<String, dynamic>>.empty();
-                              }
-                              try {
-                                return await context.read<AppState>().persons.searchPersons(textEditingValue.text);
-                              } catch (e) {
-                                debugPrint('Search error: $e');
-                                return const Iterable<Map<String, dynamic>>.empty();
-                              }
-                            },
-                            displayStringForOption: (option) => option['name'] ?? '',
-                            onSelected: (Map<String, dynamic> selection) {
-                              setState(() {
-                                _selectedPersonId = selection['id'].toString();
-                                _searchController.text = selection['name'];
-                              });
-                            },
-                            fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
-                              _autocompleteController = controller;
-                              return TextFormField(
-                                controller: controller,
-                                focusNode: focusNode,
-                                onEditingComplete: onEditingComplete,
-                                decoration: InputDecoration(
-                                  hintText: 'Search by name or phone',
-                                  prefixIcon: const Icon(Icons.search),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Autocomplete<Map<String, dynamic>>(
+                                  optionsBuilder: (TextEditingValue textEditingValue) async {
+                                    if (textEditingValue.text.isEmpty) {
+                                      return const Iterable<Map<String, dynamic>>.empty();
+                                    }
+                                    try {
+                                      return await context.read<AppState>().persons.searchPersons(textEditingValue.text);
+                                    } catch (e) {
+                                      debugPrint('Search error: $e');
+                                      return const Iterable<Map<String, dynamic>>.empty();
+                                    }
+                                  },
+                                  displayStringForOption: (option) => option['name'] ?? '',
+                                  onSelected: (Map<String, dynamic> selection) {
+                                    setState(() {
+                                      _selectedParty = selection;
+                                      _searchController.text = selection['name'];
+                                    });
+                                  },
+                                  fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
+                                    _autocompleteController = controller;
+                                    return TextFormField(
+                                      controller: controller,
+                                      focusNode: focusNode,
+                                      onEditingComplete: onEditingComplete,
+                                      decoration: InputDecoration(
+                                        hintText: 'Search by name or phone',
+                                        prefixIcon: const Icon(Icons.search),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  optionsViewBuilder: (context, onSelected, options) {
+                                    return Align(
+                                      alignment: Alignment.topLeft,
+                                      child: Material(
+                                        elevation: 4,
+                                        child: ConstrainedBox(
+                                          constraints: BoxConstraints(maxHeight: 200, maxWidth: MediaQuery.of(context).size.width - 72),
+                                          child: ListView.builder(
+                                            padding: EdgeInsets.zero,
+                                            shrinkWrap: true,
+                                            itemCount: options.length,
+                                            itemBuilder: (BuildContext context, int index) {
+                                              final option = options.elementAt(index);
+                                              return ListTile(
+                                                title: Text(option['name'] ?? 'Unknown'),
+                                                subtitle: Text(option['mobile_number'] ?? 'No phone'),
+                                                onTap: () {
+                                                  onSelected(option);
+                                                },
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
                                 ),
-                              );
-                            },
-                            optionsViewBuilder: (context, onSelected, options) {
-                              return Align(
-                                alignment: Alignment.topLeft,
-                                child: Material(
-                                  elevation: 4,
-                                  child: ConstrainedBox(
-                                    constraints: BoxConstraints(maxHeight: 200, maxWidth: MediaQuery.of(context).size.width - 72), // Adjust width based on padding
-                                    child: ListView.builder(
-                                      padding: EdgeInsets.zero,
-                                      shrinkWrap: true,
-                                      itemCount: options.length,
-                                      itemBuilder: (BuildContext context, int index) {
-                                        final option = options.elementAt(index);
-                                        return ListTile(
-                                          title: Text(option['name'] ?? 'Unknown'),
-                                          subtitle: Text(option['mobile_number'] ?? 'No phone'),
-                                          onTap: () {
-                                            onSelected(option);
-                                          },
+                              ),
+                              const SizedBox(width: 8),
+                              // Dropdown button to show all parties
+                              Container(
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey.shade400),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: IconButton(
+                                  icon: const Icon(Icons.arrow_drop_down, size: 28),
+                                  tooltip: 'View all parties',
+                                  onPressed: () async {
+                                    try {
+                                      final appState = context.read<AppState>();
+                                      final allParties = await appState.persons.searchPersons('');
+                                      
+                                      if (!mounted) return;
+                                      
+                                      if (allParties.isEmpty) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('No parties found')),
                                         );
-                                      },
-                                    ),
-                                  ),
+                                        return;
+                                      }
+                                      
+                                      final selected = await showDialog<Map<String, dynamic>>(
+                                        context: context,
+                                        builder: (context) => AlertDialog(
+                                          title: const Text('Select Party'),
+                                          content: SizedBox(
+                                            width: double.maxFinite,
+                                            child: ListView.builder(
+                                              shrinkWrap: true,
+                                              itemCount: allParties.length,
+                                              itemBuilder: (context, index) {
+                                                final party = allParties.elementAt(index);
+                                                return ListTile(
+                                                  leading: CircleAvatar(
+                                                    child: Text(
+                                                      (party['name'] ?? 'U').substring(0, 1).toUpperCase(),
+                                                    ),
+                                                  ),
+                                                  title: Text(party['name'] ?? 'Unknown'),
+                                                  subtitle: Text(party['mobile_number'] ?? 'No phone'),
+                                                  onTap: () => Navigator.pop(context, party),
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(context),
+                                              child: const Text('Cancel'),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                      
+                                      if (selected != null) {
+                                        setState(() {
+                                          _selectedParty = selected;
+                                          _autocompleteController?.text = selected['name'];
+                                        });
+                                      }
+                                    } catch (e) {
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text('Error loading parties: $e')),
+                                        );
+                                      }
+                                    }
+                                  },
                                 ),
-                              );
-                            },
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 12),
                           OutlinedButton.icon(
@@ -320,7 +523,7 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
                               
                               if (result != null) {
                                 setState(() {
-                                  _selectedPersonId = result['id'].toString();
+                                  _selectedParty = result;
                                   _autocompleteController?.text = result['name'];
                                 });
                                 
@@ -384,6 +587,21 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
                                 ),
                               );
                             }).toList(),
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Size (Optional)',
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                          ),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            controller: _sizeController,
+                            decoration: InputDecoration(
+                              hintText: 'e.g. Small, Medium, Large, 45mm',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -541,56 +759,114 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          if ((context.watch<AppState>().user?.assignedStorages.length ?? 0) > 1) ...[
+                              const Text(
+                                'Storage Facility *',
+                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                              ),
+                              const SizedBox(height: 8),
+                              DropdownButtonFormField<int>(
+                                value: _assignedColdStorageId,
+                                decoration: InputDecoration(
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                                ),
+                                items: context.read<AppState>().user!.assignedStorages.map((s) {
+                                    return DropdownMenuItem(
+                                        value: s.id,
+                                        child: Text(s.displayName),
+                                    );
+                                }).toList(),
+                                onChanged: _onStorageChanged,
+                              ),
+                              const SizedBox(height: 12),
+                          ],
+
                           const Text(
                             'Storage Room *',
                             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                           ),
                           const SizedBox(height: 8),
-                          DropdownButtonFormField<String>(
-                            value: _selectedStorageRoom,
-                            decoration: InputDecoration(
-                              hintText: 'Select storage room',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
+                          if (_storageRooms.isEmpty)
+                             const Text(
+                               'No storage rooms available for your assigned facility. Please contact manager.',
+                               style: TextStyle(color: Colors.red),
+                             )
+                          else
+                            DropdownButtonFormField<String>(
+                              value: _selectedStorageRoom,
+                              decoration: InputDecoration(
+                                hintText: 'Select storage room',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
                               ),
+                              items: _storageRooms.map((room) {
+                                return DropdownMenuItem(
+                                  value: room,
+                                  child: Text(room),
+                                );
+                              }).toList(),
+                              onChanged: (value) => setState(() => _selectedStorageRoom = value),
+                              validator: (v) => v == null ? 'Required' : null,
                             ),
-                            items: _storageRooms.map((room) {
-                              return DropdownMenuItem(
-                                value: room,
-                                child: Text(room),
-                              );
-                            }).toList(),
-                            onChanged: (value) => setState(() => _selectedStorageRoom = value),
-                            validator: (v) => v == null ? 'Required' : null,
-                          ),
                           const SizedBox(height: 12),
                           const Text(
-                            'Expected Storage Duration',
+                            'Storage Duration',
                             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                           ),
                           const SizedBox(height: 8),
-                          Row(
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Expanded(
-                                child: TextFormField(
-                                  controller: _durationController,
-                                  decoration: InputDecoration(
-                                    hintText: 'Enter duration',
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8),
+                              Wrap(
+                                spacing: 8,
+                                children: [
+                                  ChoiceChip(
+                                    label: const Text('60 Days'),
+                                    selected: _durationController.text == '60',
+                                    onSelected: (selected) {
+                                      if (selected) setState(() => _durationController.text = '60');
+                                    },
+                                  ),
+                                  ChoiceChip(
+                                    label: const Text('90 Days'),
+                                    selected: _durationController.text == '90',
+                                    onSelected: (selected) {
+                                      if (selected) setState(() => _durationController.text = '90');
+                                    },
+                                  ),
+                                  ChoiceChip(
+                                    label: const Text('1 Year'),
+                                    selected: _durationController.text == '365',
+                                    onSelected: (selected) {
+                                      if (selected) setState(() => _durationController.text = '365');
+                                    },
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _durationController,
+                                      enabled: true, // Allow manual input
+                                      decoration: InputDecoration(
+                                        hintText: 'Enter days',
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                      keyboardType: TextInputType.number,
+                                      onChanged: (val) => setState(() {}), // rebuild to update chips
                                     ),
                                   ),
-                                  keyboardType: TextInputType.number,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: const Color(0xFFE0E0E0)),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Text('Days'),
+                                  const SizedBox(width: 12),
+                                  const Text('Days'),
+                                ],
                               ),
                             ],
                           ),

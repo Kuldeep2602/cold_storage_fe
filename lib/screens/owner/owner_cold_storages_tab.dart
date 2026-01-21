@@ -45,158 +45,243 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
       if (mounted) {
         setState(() => _isLoading = false);
         debugPrint('Cold storages load error: $e');
-        // Demo data
         setState(() {
-          _coldStorages = [
-            {
-              'id': 1,
-              'name': 'ColdOne',
-              'code': 'COLD1',
-              'display_name': 'ColdOne Nashik Main',
-              'city': 'Nashik',
-              'state': 'Maharashtra',
-              'total_capacity': 500,
-              'occupied_capacity': 350,
-              'available_capacity': 150,
-              'utilization_percent': 70,
-              'manager_name': 'Ramesh Kumar',
-              'is_active': true,
-            },
-            {
-              'id': 2,
-              'name': 'ColdTwo',
-              'code': 'COLD2',
-              'display_name': 'ColdTwo Pune',
-              'city': 'Pune',
-              'state': 'Maharashtra',
-              'total_capacity': 300,
-              'occupied_capacity': 180,
-              'available_capacity': 120,
-              'utilization_percent': 60,
-              'manager_name': null,
-              'is_active': true,
-            },
-          ];
+          _coldStorages = []; // Empty list on error
         });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading cold storages: $e')),
+        );
       }
     }
   }
 
-  void _showCreateDialog() {
-    final nameController = TextEditingController();
-    final codeController = TextEditingController();
-    final cityController = TextEditingController();
-    final capacityController = TextEditingController(text: '500');
+  void _showCreateDialog([Map<String, dynamic>? existingData]) {
+    final isEdit = existingData != null;
+    final nameController = TextEditingController(text: existingData?['name']);
+    final codeController = TextEditingController(text: existingData?['code']);
+    final cityController = TextEditingController(text: existingData?['city']);
+    final capacityController = TextEditingController(
+        text: existingData != null ? '${existingData['total_capacity']}' : '500');
+    final roomsController = TextEditingController(); // Only for create
+
+    // Storage Types
+    final storageTypes = [
+      {'value': 'silo', 'label': 'Silos'},
+      {'value': 'warehouse', 'label': 'Warehouses'},
+      {'value': 'cold_storage', 'label': 'Cold Storages'},
+      {'value': 'frozen_storage', 'label': 'Frozen Storages'},
+      {'value': 'ripening_chamber', 'label': 'Ripening Chambers'},
+      {'value': 'controlled_atmosphere', 'label': 'Controlled Atmosphere Storage'},
+    ];
+    
+    String selectedType = existingData?['storage_type'] ?? 'cold_storage';
+    // Handle case where existingData['storage_type'] might be null or not in list
+    if (!storageTypes.any((t) => t['value'] == selectedType)) {
+        selectedType = 'cold_storage';
+    }
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE3F2FD),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(Icons.add_business, color: Color(0xFF1976D2), size: 20),
-            ),
-            const SizedBox(width: 12),
-            const Text('Add Cold Storage'),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Row(
             children: [
-              const Text('Name *', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-              const SizedBox(height: 8),
-              TextField(
-                controller: nameController,
-                decoration: InputDecoration(
-                  hintText: 'e.g. ColdOne Main',
-                  prefixIcon: const Icon(Icons.business),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE3F2FD),
+                  borderRadius: BorderRadius.circular(8),
                 ),
+                child: const Icon(Icons.add_business, color: Color(0xFF1976D2), size: 20),
               ),
-              const SizedBox(height: 16),
-              
-              const Text('Code *', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-              const SizedBox(height: 8),
-              TextField(
-                controller: codeController,
-                decoration: InputDecoration(
-                  hintText: 'e.g. COLD1',
-                  prefixIcon: const Icon(Icons.tag),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-              ),
-              const SizedBox(height: 16),
-              
-              const Text('City', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-              const SizedBox(height: 8),
-              TextField(
-                controller: cityController,
-                decoration: InputDecoration(
-                  hintText: 'e.g. Nashik',
-                  prefixIcon: const Icon(Icons.location_city),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-              ),
-              const SizedBox(height: 16),
-              
-              const Text('Total Capacity (MT)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-              const SizedBox(height: 8),
-              TextField(
-                controller: capacityController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  hintText: '500',
-                  prefixIcon: const Icon(Icons.storage),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-              ),
+              const SizedBox(width: 12),
+              Text(isEdit ? 'Edit Storage' : 'Add Storage'),
             ],
           ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Storage Type', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                    value: selectedType,
+                    decoration: InputDecoration(
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                    ),
+                    items: storageTypes.map((type) {
+                        return DropdownMenuItem<String>(
+                            value: type['value'],
+                            child: Text(type['label']!),
+                        );
+                    }).toList(),
+                    onChanged: (value) {
+                        if (value != null) {
+                            setDialogState(() => selectedType = value);
+                        }
+                    },
+                ),
+                const SizedBox(height: 16),
+
+                const Text('Name *', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: nameController,
+                  decoration: InputDecoration(
+                    hintText: 'e.g. Storage Main',
+                    prefixIcon: const Icon(Icons.business),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                
+                const Text('Code *', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: codeController,
+                  decoration: InputDecoration(
+                    hintText: 'e.g. STR1',
+                    prefixIcon: const Icon(Icons.tag),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                
+                const Text('City', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: cityController,
+                  decoration: InputDecoration(
+                    hintText: 'e.g. Nashik',
+                    prefixIcon: const Icon(Icons.location_city),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                
+                const Text('Total Capacity (MT)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: capacityController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    hintText: '500',
+                    prefixIcon: const Icon(Icons.storage),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+                if (!isEdit) ...[
+                  const SizedBox(height: 16),
+                  const Text('Rooms (Optional)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: roomsController,
+                    decoration: InputDecoration(
+                      hintText: 'e.g. Room A, Room B (comma separated)',
+                      prefixIcon: const Icon(Icons.meeting_room),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (nameController.text.isEmpty || codeController.text.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Name and Code are required')),
+                  );
+                  return;
+                }
+                
+                try {
+                  final appState = context.read<AppState>();
+                  final body = {
+                    'name': nameController.text,
+                    'code': codeController.text.toUpperCase(),
+                    'city': cityController.text,
+                    'total_capacity': double.tryParse(capacityController.text) ?? 500,
+                    'storage_type': selectedType,
+                  };
+
+                  if (isEdit) {
+                    await appState.client.patchJson(
+                        '/api/inventory/cold-storages/${existingData['id']}/', body);
+                  } else {
+                    if (roomsController.text.isNotEmpty) {
+                      body['initial_rooms'] = roomsController.text.split(',').map((e) => e.trim()).toList();
+                    }
+                    await appState.client.postJson('/api/inventory/cold-storages/', body);
+                  }
+
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    _loadColdStorages();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Storage ${isEdit ? 'updated' : 'created'} successfully')),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error: $e')),
+                    );
+                  }
+                }
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1976D2)),
+              child: Text(isEdit ? 'Update' : 'Create'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showDetailsDialog(Map<String, dynamic> cs) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(cs['display_name'] ?? cs['name'] ?? 'Details'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _detailRow('Code', cs['code']),
+            _detailRow('City', cs['city']),
+            _detailRow('Capacity', '${cs['total_capacity']} MT'),
+            _detailRow('Occupied', '${cs['occupied_capacity']} MT'),
+            _detailRow('Manager', cs['manager_name'] ?? 'Not Assigned'),
+            _detailRow('Status', (cs['is_active'] ?? false) ? 'Active' : 'Inactive'),
+          ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('Close'),
           ),
-          ElevatedButton(
-            onPressed: () async {
-              if (nameController.text.isEmpty || codeController.text.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Name and Code are required')),
-                );
-                return;
-              }
-              
-              try {
-                final appState = context.read<AppState>();
-                await appState.client.postJson('/api/inventory/cold-storages/', {
-                  'name': nameController.text,
-                  'code': codeController.text.toUpperCase(),
-                  'city': cityController.text,
-                  'total_capacity': double.tryParse(capacityController.text) ?? 500,
-                });
-                Navigator.pop(context);
-                _loadColdStorages();
-                ScaffoldMessenger.of(this.context).showSnackBar(
-                  const SnackBar(content: Text('Cold storage created successfully')),
-                );
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Error: $e')),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1976D2)),
-            child: const Text('Create'),
-          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _detailRow(String label, String? value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(width: 80, child: Text('$label:', style: TextStyle(color: Colors.grey[600], fontSize: 13))),
+          Expanded(child: Text(value ?? '-', style: const TextStyle(fontWeight: FontWeight.w500))),
         ],
       ),
     );
@@ -326,7 +411,7 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Cold Storages',
+                          'Storages',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -376,7 +461,7 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
                             child: ElevatedButton.icon(
                               onPressed: _showCreateDialog,
                               icon: const Icon(Icons.add_business, size: 20),
-                              label: const Text('Add New Cold Storage'),
+                              label: const Text('Add New Storage'),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF4CAF50),
                                 foregroundColor: Colors.white,
@@ -392,7 +477,7 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
 
                           // Cold Storages List
                           Text(
-                            'Your Cold Storages (${_coldStorages.length})',
+                            'Your Storages (${_coldStorages.length})',
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -415,7 +500,7 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
                                   Icon(Icons.ac_unit, size: 48, color: Colors.grey[400]),
                                   const SizedBox(height: 12),
                                   Text(
-                                    'No cold storages yet',
+                                    'No storages yet',
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
@@ -424,7 +509,7 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'Add your first cold storage facility',
+                                    'Add your first storage facility',
                                     style: TextStyle(
                                       fontSize: 14,
                                       color: Colors.grey[500],
@@ -606,9 +691,7 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () {
-                          // View details
-                        },
+                        onPressed: () => _showDetailsDialog(cs),
                         icon: const Icon(Icons.visibility, size: 18),
                         label: const Text('View'),
                         style: OutlinedButton.styleFrom(
@@ -621,9 +704,7 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () {
-                          // Edit cold storage
-                        },
+                        onPressed: () => _showCreateDialog(cs),
                         icon: const Icon(Icons.edit, size: 18),
                         label: const Text('Edit'),
                         style: OutlinedButton.styleFrom(

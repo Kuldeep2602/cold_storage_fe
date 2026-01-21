@@ -37,14 +37,11 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
         debugPrint('Staff load error: $e');
         setState(() {
           _isLoading = false;
-          // Demo data
-          _allStaff = [
-            {'id': 1, 'name': 'Ramesh Kumar', 'phone_number': '+91 98765 43210', 'role': 'manager', 'is_active': true},
-            {'id': 2, 'name': 'Amit Patel', 'phone_number': '+91 98765 43211', 'role': 'operator', 'is_active': true},
-            {'id': 3, 'name': 'Sunita Singh', 'phone_number': '+91 98765 43212', 'role': 'operator', 'is_active': true},
-            {'id': 4, 'name': 'Priya Sharma', 'phone_number': '+91 98765 43213', 'role': 'technician', 'is_active': true},
-          ];
+          _allStaff = []; // Empty list on error
         });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading staff: $e')),
+        );
       }
     }
   }
@@ -57,6 +54,13 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
     final phoneController = TextEditingController();
     final nameController = TextEditingController();
     String selectedRole = 'manager';
+    // Initialize selected ids - default to all for convenience? Or none?
+    // Let's default to all
+    final user = context.read<AppState>().user;
+    final Set<int> _selectedStorageIds = {};
+    if (user != null) {
+        _selectedStorageIds.addAll(user.assignedStorages.map((e) => e.id));
+    }
 
     showDialog(
       context: context,
@@ -127,7 +131,7 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
                   currentRole: selectedRole,
                   role: 'manager',
                   title: 'Manager',
-                  subtitle: 'Full access to manage cold storage, staff & inventory',
+                  subtitle: 'Full access to manage storages, staff & inventory',
                   icon: Icons.admin_panel_settings,
                   color: const Color(0xFF1976D2),
                   onSelect: () => setDialogState(() => selectedRole = 'manager'),
@@ -154,6 +158,47 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
                   color: const Color(0xFFFF9800),
                   onSelect: () => setDialogState(() => selectedRole = 'technician'),
                 ),
+
+                if (context.read<AppState>().user?.assignedStorages.isNotEmpty ?? false) ...[
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Assign Storages',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: StatefulBuilder(
+                        builder: (context, setState) { // Local state for checkboxes
+                          final storages = context.read<AppState>().user!.assignedStorages;
+                          return Column(
+                            children: storages.map((storage) {
+                              return CheckboxListTile(
+                                title: Text(storage.displayName),
+                                subtitle: Text(storage.name),
+                                value: _selectedStorageIds.contains(storage.id),
+                                onChanged: (val) {
+                                  setState(() {
+                                    if (val == true) {
+                                        _selectedStorageIds.add(storage.id);
+                                    } else {
+                                        _selectedStorageIds.remove(storage.id);
+                                    }
+                                  });
+                                  // Update the main dialog state if needed (though local list is enough)
+                                },
+                                dense: true,
+                                controlAffinity: ListTileControlAffinity.leading,
+                              );
+                            }).toList(),
+                          );
+                        }
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -177,6 +222,7 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
                     'phone_number': phoneController.text,
                     'name': nameController.text,
                     'role': selectedRole,
+                    'storage_ids': _selectedStorageIds.toList(),
                   });
                   Navigator.pop(context);
                   _loadStaff();
@@ -265,57 +311,85 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
     );
   }
 
-  void _showChangeRoleDialog(Map<String, dynamic> staff) {
+  void _showEditStaffDialog(Map<String, dynamic> staff) {
+    final nameController = TextEditingController(text: staff['name'] ?? '');
     String selectedRole = staff['role']?.toString() ?? 'operator';
 
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Change Role'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Staff: ${staff['name'] ?? 'Unknown'}',
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 16),
-              
-              _buildRoleOption(
-                setDialogState: setDialogState,
-                currentRole: selectedRole,
-                role: 'manager',
-                title: 'Manager',
-                subtitle: 'Full access',
-                icon: Icons.admin_panel_settings,
-                color: const Color(0xFF1976D2),
-                onSelect: () => setDialogState(() => selectedRole = 'manager'),
-              ),
-              const SizedBox(height: 8),
-              _buildRoleOption(
-                setDialogState: setDialogState,
-                currentRole: selectedRole,
-                role: 'operator',
-                title: 'Operator',
-                subtitle: 'Inward/Outward',
-                icon: Icons.work,
-                color: const Color(0xFF4CAF50),
-                onSelect: () => setDialogState(() => selectedRole = 'operator'),
-              ),
-              const SizedBox(height: 8),
-              _buildRoleOption(
-                setDialogState: setDialogState,
-                currentRole: selectedRole,
-                role: 'technician',
-                title: 'Technician',
-                subtitle: 'Temperature',
-                icon: Icons.thermostat,
-                color: const Color(0xFFFF9800),
-                onSelect: () => setDialogState(() => selectedRole = 'technician'),
-              ),
-            ],
+          title: const Text('Edit Staff Member'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Phone: ${staff['phone_number'] ?? ''}',
+                  style: TextStyle(
+                    fontSize: 14, 
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Name',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: nameController,
+                  decoration: InputDecoration(
+                    hintText: 'Enter name',
+                    prefixIcon: const Icon(Icons.person),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Role',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 8),
+                
+                _buildRoleOption(
+                  setDialogState: setDialogState,
+                  currentRole: selectedRole,
+                  role: 'manager',
+                  title: 'Manager',
+                  subtitle: 'Full access',
+                  icon: Icons.admin_panel_settings,
+                  color: const Color(0xFF1976D2),
+                  onSelect: () => setDialogState(() => selectedRole = 'manager'),
+                ),
+                const SizedBox(height: 8),
+                _buildRoleOption(
+                  setDialogState: setDialogState,
+                  currentRole: selectedRole,
+                  role: 'operator',
+                  title: 'Operator',
+                  subtitle: 'Inward/Outward',
+                  icon: Icons.work,
+                  color: const Color(0xFF4CAF50),
+                  onSelect: () => setDialogState(() => selectedRole = 'operator'),
+                ),
+                const SizedBox(height: 8),
+                _buildRoleOption(
+                  setDialogState: setDialogState,
+                  currentRole: selectedRole,
+                  role: 'technician',
+                  title: 'Technician',
+                  subtitle: 'Temperature',
+                  icon: Icons.thermostat,
+                  color: const Color(0xFFFF9800),
+                  onSelect: () => setDialogState(() => selectedRole = 'technician'),
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
@@ -326,14 +400,17 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
               onPressed: () async {
                 try {
                   final appState = context.read<AppState>();
-                  await appState.client.postJson(
-                    '/api/staff/${staff['id']}/update-role/',
-                    {'role': selectedRole},
+                  await appState.client.patchJson(
+                    '/api/staff/${staff['id']}/',
+                    {
+                      'name': nameController.text,
+                      'role': selectedRole
+                    },
                   );
                   Navigator.pop(context);
                   _loadStaff();
                   ScaffoldMessenger.of(this.context).showSnackBar(
-                    const SnackBar(content: Text('Role updated successfully')),
+                    const SnackBar(content: Text('Staff updated successfully')),
                   );
                 } catch (e) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -342,7 +419,7 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
                 }
               },
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1976D2)),
-              child: const Text('Update Role'),
+              child: const Text('Save Changes'),
             ),
           ],
         ),
@@ -456,7 +533,7 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
                           // Managers Section
                           _buildStaffSection(
                             title: 'Managers',
-                            subtitle: 'Can manage cold storage operations',
+                            subtitle: 'Can manage storage operations',
                             icon: Icons.admin_panel_settings,
                             iconColor: const Color(0xFF1976D2),
                             staff: managers,
@@ -655,15 +732,19 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
           PopupMenuButton<String>(
             icon: Icon(Icons.more_vert, color: Colors.grey[600]),
             itemBuilder: (context) => [
-              const PopupMenuItem(value: 'change_role', child: Text('Change Role')),
+              const PopupMenuItem(value: 'edit', child: Text('Edit')),
               PopupMenuItem(
                 value: 'toggle',
                 child: Text(isActive ? 'Disable' : 'Enable'),
               ),
+              const PopupMenuItem(
+                value: 'delete',
+                child: Text('Delete', style: TextStyle(color: Colors.red)),
+              ),
             ],
             onSelected: (value) async {
-              if (value == 'change_role') {
-                _showChangeRoleDialog(staff);
+              if (value == 'edit') {
+                _showEditStaffDialog(staff);
               } else if (value == 'toggle') {
                 try {
                   final appState = context.read<AppState>();
@@ -676,6 +757,45 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Error: $e')),
                   );
+                }
+              } else if (value == 'delete') {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Delete Staff?'),
+                    content: Text(
+                      'Are you sure you want to delete ${staff['name']}? This action cannot be undone.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirm == true) {
+                  try {
+                    final appState = context.read<AppState>();
+                    await appState.client.deleteJson('/api/staff/${staff['id']}/');
+                    _loadStaff();
+                     if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Staff member deleted successfully')),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error deleting staff: $e')),
+                      );
+                    }
+                  }
                 }
               }
             },

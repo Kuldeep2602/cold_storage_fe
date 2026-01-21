@@ -17,6 +17,7 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
   bool _isLoading = false;
 
   Future<void> _sendOTP() async {
+    if (_isLoading) return;
     final phone = _phoneController.text.trim();
     
     if (phone.isEmpty) {
@@ -171,7 +172,7 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
                   
                   // Subtitle
                   const Text(
-                    'Cold Storage Login',
+                    'Storage Login',
                     style: TextStyle(
                       fontSize: 16,
                       color: Color(0xFF666666),
@@ -233,7 +234,7 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton(
-                      onPressed: _isLoading ? null : _sendOTP,
+                      onPressed: _sendOTP,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF1E88E5),
                         foregroundColor: Colors.white,
@@ -267,7 +268,7 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 32, top: 40),
                     child: Text(
-                      'Secure login for cold storage operations',
+                      'Secure login for storage operations',
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey.shade600,

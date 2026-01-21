@@ -50,6 +50,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
   }
 
   Future<void> _verifyOTP() async {
+    if (_isLoading) return;
     final otp = _otpControllers.map((c) => c.text).join();
     
     if (otp.length != 6) {
@@ -282,7 +283,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: _isLoading ? null : _verifyOTP,
+                  onPressed: _verifyOTP,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1E88E5),
                     foregroundColor: Colors.white,

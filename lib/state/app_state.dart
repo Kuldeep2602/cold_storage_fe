@@ -10,10 +10,10 @@ import '../services/dashboard_service.dart';
 import '../services/inventory_service.dart';
 import '../services/ledger_service.dart';
 import '../services/payments_service.dart';
+import '../services/person_service.dart';
 import '../services/staff_service.dart';
 import '../services/temperature_service.dart';
 import '../services/user_service.dart';
-import '../services/person_service.dart';
 import '../utils/default_base_url.dart';
 
 class AppState extends ChangeNotifier {
@@ -28,54 +28,37 @@ class AppState extends ChangeNotifier {
   late LedgerService ledger;
   late PaymentsService payments;
   late UserService users;
-  late StaffService staff;
   late DashboardService dashboard;
-
-  AppState() {
-    _api = ApiClient(
-      baseUrl: defaultBaseUrl(),
-      onUnauthorized: logout,
-    );
-    auth = AuthService(_api);
-    inventory = InventoryService(_api);
-    temperature = TemperatureService(_api);
-    ledger = LedgerService(_api);
-    payments = PaymentsService(_api);
-    users = UserService(_api);
-    staff = StaffService(_api);
-    dashboard = DashboardService(_api);
-    persons = PersonService(_api);
-  }
-
   late PersonService persons;
+  late StaffService staff;
 
   String _baseUrl = defaultBaseUrl();
   String? _accessToken;
   String? _refreshToken;
   User? _user;
+
   String? _selectedLanguage;
   String? _selectedRole;
 
   bool get initialized => _initialized;
   String get baseUrl => _baseUrl;
-  ApiClient get client => _api;
   String? get accessToken => _accessToken;
   User? get user => _user;
   bool get isAuthenticated => (_accessToken ?? '').isNotEmpty;
-  String? get selectedLanguage => _selectedLanguage;
+
+  // Expose the API client
+  ApiClient get client => _api;
+
+  // Role and Language Getters
+  bool get hasSelectedLanguage => _selectedLanguage != null && _selectedLanguage!.isNotEmpty;
+  bool get hasSelectedRole => _selectedRole != null && _selectedRole!.isNotEmpty;
+  bool get hasRole => _user?.role != null && _user!.role!.isNotEmpty;
   String? get selectedRole => _selectedRole;
-  
-  /// Check if language has been selected
-  bool get hasSelectedLanguage => (_selectedLanguage ?? '').isNotEmpty;
-  
-  /// Check if role has been selected
-  bool get hasSelectedRole => (_selectedRole ?? '').isNotEmpty;
 
-  /// Check if user has any role assigned
-  bool get hasRole => _user?.hasRole ?? false;
-
-  /// Check if user has manager-level access
-  bool get isManagerOrAdmin => _user?.isManagerOrHigher ?? false;
+  bool get isManagerOrAdmin {
+    final role = _user?.role ?? '';
+    return role == 'manager' || role == 'admin';
+  }
 
   Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
@@ -101,10 +84,7 @@ class AppState extends ChangeNotifier {
   }
 
   void _rebuildApi() {
-    _api = ApiClient(
-      baseUrl: _baseUrl,
-      onUnauthorized: logout,
-    );
+    _api = ApiClient(baseUrl: _baseUrl);
     _api.accessToken = _accessToken;
 
     auth = AuthService(_api);
@@ -113,9 +93,9 @@ class AppState extends ChangeNotifier {
     ledger = LedgerService(_api);
     payments = PaymentsService(_api);
     users = UserService(_api);
-    staff = StaffService(_api);
     dashboard = DashboardService(_api);
     persons = PersonService(_api);
+    staff = StaffService(_api);
   }
 
   Future<void> setBaseUrl(String value) async {
@@ -127,9 +107,35 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Signup a new user with phone number and role (also sends OTP)
-  Future<Map<String, dynamic>> signup(String phoneNumber, {String? role}) {
-    return auth.signup(phoneNumber, role: role ?? _selectedRole);
+  // Language & Role Methods
+
+  Future<void> setSelectedLanguage(String language) async {
+    _selectedLanguage = language;
+    await _prefs.setString('selectedLanguage', language);
+    notifyListeners();
+  }
+
+  Future<void> setSelectedRole(String role) async {
+    _selectedRole = role;
+    await _prefs.setString('selectedRole', role);
+    notifyListeners();
+  }
+
+  Future<void> clearSelectedRole() async {
+    _selectedRole = null;
+    await _prefs.remove('selectedRole');
+    notifyListeners();
+  }
+
+  Future<void> clearSelectedLanguage() async {
+    _selectedLanguage = null;
+    await _prefs.remove('selectedLanguage');
+    notifyListeners();
+  }
+
+  /// Signup a new user with phone number (also sends OTP)
+  Future<Map<String, dynamic>> signup(String phoneNumber) {
+    return auth.signup(phoneNumber);
   }
 
   Future<Map<String, dynamic>> requestOtp(String phoneNumber) {
@@ -139,10 +145,36 @@ class AppState extends ChangeNotifier {
   Future<void> verifyOtp({required String phoneNumber, required String code}) async {
     final res = await auth.verifyOtp(phoneNumber: phoneNumber, code: code);
 
+    // Parse user data first to check role
+    final userMap = (res['user'] as Map?)?.cast<String, dynamic>();
+    final authenticatedUser = userMap == null ? null : User.fromJson(userMap);
+    
+    // Strict Role Check: Ensure the logged-in user's role matches the selected role
+    // Exception: Owners often have 'admin' role in backend, or 'owner'.
+    if (authenticatedUser != null && _selectedRole != null) {
+      final userRole = (authenticatedUser.role ?? '').toLowerCase();
+      final selectedRole = _selectedRole!.toLowerCase();
+      
+      // Allow if roles match exactly
+      bool isMismatch = userRole != selectedRole;
+      
+      // Special case: 'admin' user can login as 'owner'
+      if (selectedRole == 'owner' && userRole == 'admin') {
+        isMismatch = false;
+      }
+      
+      if (isMismatch) {
+        // If roles mismatch, do not log in. Throw error.
+        throw ApiException(
+          403,
+          {'detail': 'Role mismatch. You cannot login to this role with your account.'},
+        );
+      }
+    }
+
     _accessToken = (res['access'] as String?) ?? '';
     _refreshToken = (res['refresh'] as String?) ?? '';
-    final userMap = (res['user'] as Map?)?.cast<String, dynamic>();
-    _user = userMap == null ? null : User.fromJson(userMap);
+    _user = authenticatedUser;
 
     _api.accessToken = _accessToken;
 
@@ -153,60 +185,21 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> setSelectedLanguage(String languageCode) async {
-    _selectedLanguage = languageCode;
-    await _prefs.setString('selectedLanguage', languageCode);
-    
-    // If user is already authenticated, sync to backend
-    if (isAuthenticated && _user != null) {
-      try {
-        await users.updateLanguagePreference(languageCode);
-        // Update local user object
-        final updatedUserJson = _prefs.getString('userJson');
-        if (updatedUserJson != null) {
-          final userMap = jsonDecode(updatedUserJson) as Map<String, dynamic>;
-          userMap['preferred_language'] = languageCode;
-          _user = User.fromJson(userMap);
-          await _prefs.setString('userJson', jsonEncode(_user?.toJson()));
-        }
-      } catch (_) {
-        // Silent fail - will sync on next login
-      }
-    }
-    
-    notifyListeners();
-  }
-
-  Future<void> setSelectedRole(String roleCode) async {
-    _selectedRole = roleCode;
-    await _prefs.setString('selectedRole', roleCode);
-    notifyListeners();
-  }
-
-  /// Clear the selected role (allows user to change role)
-  Future<void> clearSelectedRole() async {
-    _selectedRole = null;
-    await _prefs.remove('selectedRole');
-    notifyListeners();
-  }
-
-  /// Clear the selected language (allows user to change language)
-  Future<void> clearSelectedLanguage() async {
-    _selectedLanguage = null;
-    await _prefs.remove('selectedLanguage');
-    notifyListeners();
-  }
-
   Future<void> logout() async {
     _accessToken = null;
     _refreshToken = null;
     _user = null;
     _api.accessToken = null;
+    // We might NOT want to clear language on logout, but clearing role might be appropriate depending on UX
+    // Keeping language preference is standard.
 
     await _prefs.remove('accessToken');
     await _prefs.remove('refreshToken');
     await _prefs.remove('userJson');
-    // Don't remove selectedLanguage on logout
+    
+    // Optionally clear role selection if you want them to re-select role on next login
+    // await clearSelectedRole(); 
+
     notifyListeners();
   }
 }

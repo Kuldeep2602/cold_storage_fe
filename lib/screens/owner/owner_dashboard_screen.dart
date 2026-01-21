@@ -57,7 +57,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
             BottomNavigationBarItem(
               icon: Icon(Icons.ac_unit_outlined),
               activeIcon: Icon(Icons.ac_unit),
-              label: 'Cold Storages',
+              label: 'Storages',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.people_outline),
@@ -235,14 +235,14 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
                         Icon(Icons.ac_unit, color: Colors.blue[700], size: 18),
                         const SizedBox(width: 8),
                         const Text(
-                          'Cold Storage',
+                          'Storage',
                           style: TextStyle(fontSize: 12, color: Colors.grey),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: _coldStorages.isEmpty
                               ? Text(
-                                  'No cold storages',
+                                  'No storages',
                                   style: TextStyle(color: Colors.grey[600]),
                                 )
                               : DropdownButtonHideUnderline(
@@ -255,7 +255,7 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
                                       fontWeight: FontWeight.w600,
                                       color: Colors.blue[800],
                                     ),
-                                    hint: Text('Select Cold Storage', style: TextStyle(color: Colors.grey[600])),
+                                    hint: Text('Select Storage', style: TextStyle(color: Colors.grey[600])),
                                     items: _coldStorages.map((cs) {
                                       return DropdownMenuItem<int>(
                                         value: cs['id'] as int?,

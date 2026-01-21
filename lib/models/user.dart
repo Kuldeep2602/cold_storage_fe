@@ -1,3 +1,5 @@
+import 'cold_storage.dart';
+
 class User {
   const User({
     required this.id,
@@ -7,6 +9,7 @@ class User {
     this.role,
     required this.isActive,
     required this.createdAt,
+    this.assignedStorages = const [],
   });
 
   final int id;
@@ -16,6 +19,7 @@ class User {
   final String? role;  // Nullable - null means no role assigned
   final bool isActive;
   final DateTime createdAt;
+  final List<ColdStorageSummary> assignedStorages;
 
   /// Check if user has any role assigned
   bool get hasRole => role != null && role!.isNotEmpty;
@@ -51,6 +55,10 @@ class User {
       isActive: (json['is_active'] as bool?) ?? true,
       createdAt: DateTime.tryParse((json['created_at'] as String?) ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+      assignedStorages: (json['assigned_storages'] as List<dynamic>?)
+              ?.map((e) => ColdStorageSummary.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
     );
   }
 
@@ -62,5 +70,20 @@ class User {
         'role': role,
         'is_active': isActive,
         'created_at': createdAt.toIso8601String(),
+        // We generally don't need to persist assignedStorages back to backend, 
+        // but for local storage it helps.
+        'assigned_storages': assignedStorages.map((e) => {
+              'id': e.id,
+              'name': e.name,
+              'code': e.code,
+              'display_name': e.displayName,
+              'city': e.city,
+              'rooms': e.rooms.map((r) => {
+                'id': r.id,
+                'room_name': r.roomName,
+                'capacity': r.capacity,
+                'description': r.description,
+              }).toList(),
+            }).toList(),
       };
 }

@@ -100,8 +100,19 @@ class _ManagerStaffTabState extends State<ManagerStaffTab> {
     String selectedRole = 'operator';
     
     // Check current user role to filter options
-    final currentUserRole = context.read<AppState>().user?.role;
+    final user = context.read<AppState>().user;
+    final currentUserRole = user?.role;
     final isOwnerOrAdmin = currentUserRole == 'owner' || currentUserRole == 'admin';
+    
+    // Get storages to assign (managers seeing their assigned, owners seeing owned)
+    final availableStorages = user?.assignedStorages ?? [];
+    // If owner, we might need a different source or assume assignedStorages includes owned for the frontend model
+    // For now, relying on assignedStorages being populated.
+    
+    // Default to selecting all storages
+    final Map<int, bool> selectedStorages = {
+      for (var storage in availableStorages) storage.id: true
+    };
 
     showDialog(
       context: context,
@@ -185,6 +196,36 @@ class _ManagerStaffTabState extends State<ManagerStaffTab> {
                     }
                   },
                 ),
+                if (availableStorages.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Assign Storages',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Column(
+                        children: availableStorages.map((storage) {
+                          return CheckboxListTile(
+                            title: Text(storage.displayName),
+                            subtitle: Text(storage.name),
+                            value: selectedStorages[storage.id] ?? false,
+                            onChanged: (val) {
+                              setDialogState(() {
+                                selectedStorages[storage.id] = val ?? false;
+                              });
+                            },
+                            dense: true,
+                            controlAffinity: ListTileControlAffinity.leading,
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                ],
               ],
             ),
           ),
@@ -202,12 +243,18 @@ class _ManagerStaffTabState extends State<ManagerStaffTab> {
                   return;
                 }
                 
+                final selectedIds = selectedStorages.entries
+                    .where((e) => e.value)
+                    .map((e) => e.key)
+                    .toList();
+                
                 try {
                   final appState = context.read<AppState>();
                   await appState.client.postJson('/api/staff/', {
                     'phone_number': phoneController.text,
                     'name': nameController.text,
                     'role': selectedRole,
+                    'storage_ids': selectedIds,
                   });
                   Navigator.pop(context);
                   _loadStaff();
@@ -224,6 +271,138 @@ class _ManagerStaffTabState extends State<ManagerStaffTab> {
                 backgroundColor: const Color(0xFF1976D2),
               ),
               child: const Text('Add Staff'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showEditStaffDialog(Map<String, dynamic> staff) {
+    final phoneController = TextEditingController(text: staff['phone_number']);
+    final nameController = TextEditingController(text: staff['name'] ?? '');
+    String selectedRole = staff['role'] ?? 'operator';
+    
+    // Check current user role to filter options
+    final currentUserRole = context.read<AppState>().user?.role;
+    final isOwnerOrAdmin = currentUserRole == 'owner' || currentUserRole == 'admin';
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8F5E9),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.edit, color: Color(0xFF4CAF50), size: 20),
+              ),
+              const SizedBox(width: 12),
+              const Text('Edit Staff Member'),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Phone Number',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: phoneController,
+                  keyboardType: TextInputType.phone,
+                  enabled: false, // Phone number cannot be changed usually for ID reasons, or can be if backend supports
+                  decoration: InputDecoration(
+                    hintText: '+91 98765 43210',
+                    prefixIcon: const Icon(Icons.phone),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[100],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Name',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: nameController,
+                  decoration: InputDecoration(
+                    hintText: 'Enter name',
+                    prefixIcon: const Icon(Icons.person),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Role *',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  value: selectedRole,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                  ),
+                  items: [
+                    const DropdownMenuItem(value: 'operator', child: Text('Inward/Outward Operator')),
+                    const DropdownMenuItem(value: 'technician', child: Text('Technician (Temperature)')),
+                    if (isOwnerOrAdmin)
+                      const DropdownMenuItem(value: 'manager', child: Text('Manager')),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      setDialogState(() => selectedRole = value);
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                try {
+                  final appState = context.read<AppState>();
+                  await appState.client.patchJson('/api/staff/${staff['id']}/', {
+                    'name': nameController.text,
+                    'role': selectedRole,
+                  });
+                  Navigator.pop(context);
+                  _loadStaff();
+                  ScaffoldMessenger.of(this.context).showSnackBar(
+                    const SnackBar(content: Text('Staff member updated successfully')),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: $e')),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF4CAF50),
+              ),
+              child: const Text('Save Changes'),
             ),
           ],
         ),
@@ -270,7 +449,7 @@ class _ManagerStaffTabState extends State<ManagerStaffTab> {
                           ),
                         ),
                         Text(
-                          'Add and manage cold storage staff',
+                          'Add and manage storage staff',
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.white70,
@@ -458,7 +637,7 @@ class _ManagerStaffTabState extends State<ManagerStaffTab> {
             children: [
               OutlinedButton.icon(
                 onPressed: () {
-                  // Edit staff
+                  _showEditStaffDialog(staff);
                 },
                 icon: const Icon(Icons.edit, size: 16),
                 label: const Text('Edit'),

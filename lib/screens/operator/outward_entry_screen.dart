@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../state/app_state.dart';
+import '../../services/receipt_service.dart';
+
 
 class OutwardEntryScreen extends StatefulWidget {
   const OutwardEntryScreen({super.key});
@@ -150,22 +152,95 @@ class _OutwardEntryScreenState extends State<OutwardEntryScreen> {
 
       if (!mounted) return;
 
+      if (!mounted) return;
+
       // Show success with receipt number
       final receiptNumber = result['receipt_number'] ?? 'N/A';
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Outward recorded! Receipt: $receiptNumber'),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 3),
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.orange), // Orange for outward
+              SizedBox(width: 10),
+              Text('Outward Recorded'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+               Text('Outward receipt #$receiptNumber generated.'),
+               const SizedBox(height: 20),
+               SizedBox(
+                 width: double.infinity,
+                 child: ElevatedButton.icon(
+                   icon: const Icon(Icons.download),
+                   label: const Text('Download Receipt'),
+                   style: ElevatedButton.styleFrom(
+                     backgroundColor: Colors.orange,
+                     foregroundColor: Colors.white,
+                   ),
+                   onPressed: () {
+                      final user = context.read<AppState>().user;
+                      
+                      ReceiptService.generateOutwardReceipt(
+                          entryData: {
+                              'receipt_number': receiptNumber,
+                              'party_name': item['person_name'],
+                              'party_phone': '', // Might not be available in summary
+                              'crop_name': item['crop_name'],
+                              'quantity': quantity.toString(),
+                              'unit': item['packaging_type'] == 'bori' ? 'Bags' : 'MT', // Infer or use packaging type
+                              'room': item['storage_room'] ?? '',
+                              'variety': item['crop_variety'],
+                              'grade': item['quality_grade'],
+                          },
+                          storageName: item['cold_storage_name'] ?? 'Storage',
+                          userName: user?.name ?? 'Operator',
+                      );
+                   },
+                 ),
+               )
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                  Navigator.pop(context); // Close dialog
+                  Navigator.pop(context, true); // Close screen / return true
+              },
+              child: const Text('Close'),
+            ),
+          ],
         ),
       );
 
-      // Refresh the list
-      await _searchInventory();
+      // Refresh the list if we didn't close (though we usually close)
+      // Actually pop(true) closes the dialog, but we want to close the screen?
+      // No, in outward entry usually we stay on the list screen or go back?
+      // The original code was: 
+      // Navigator.pop(context, true); -> This pops the DIALOG (from showDialog?) 
+      // Wait, _processOutward is called from _showOutwardDialog which is a dialog itself.
+      // But _processOutward calls Navigator.pop(context, true) at the end.
+      // If I show another dialog inside _processOutward, I need to handle the stack.
       
-      // Return true to indicate changes were made
-      Navigator.pop(context, true);
+      // Original flow:
+      // 1. _showOutwardDialog (Dialog 1) -> opens
+      // 2. User clicks confirm -> calls _processOutward
+      // 3. _processOutward does work -> Navigator.pop(context, true) (Closes Dialog 1 and returns true to caller?)
+      // Actually _processOutward is async. 
+      // The button "Confirm" in Dialog 1 callsNavigator.pop(context, true) IMMEDIATELY.
+      // Then if result == true, it calls _processOutward.
+      // So Dialog 1 is ALREADY closed when _processOutward runs.
+      
+      // So my new Dialog (Dialog 2) is fine.
+      // When I click "Close" on Dialog 2, I should just pop it. 
+      // And then refresh the list.
+      
+      await _searchInventory();
+
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

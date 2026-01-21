@@ -105,7 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final app = context.watch<AppState>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Cold Storage ERP')),
+      appBar: AppBar(title: const Text('Storage ERP')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

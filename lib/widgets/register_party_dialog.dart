@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'dart:async';
+import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
+import '../state/app_state.dart';
 
 class RegisterPartyDialog extends StatefulWidget {
   final Function(Map<String, dynamic>) onSave;
@@ -22,6 +27,40 @@ class _RegisterPartyDialogState extends State<RegisterPartyDialog> {
   
   String _selectedPartyType = 'farmer';
   bool _isLoading = false;
+  Timer? _debounce;
+  
+  // Cold storage selection
+  List<Map<String, dynamic>> _availableStorages = [];
+  int? _selectedColdStorageId;
+  
+  @override
+  void initState() {
+    super.initState();
+    _loadAvailableStorages();
+  }
+  
+  Future<void> _loadAvailableStorages() async {
+    try {
+      final appState = context.read<AppState>();
+      final user = appState.user;
+      
+      if (user != null && user.assignedStorages.isNotEmpty) {
+        setState(() {
+          _availableStorages = user.assignedStorages.map((cs) => {
+            'id': cs.id,
+            'name': cs.displayName,
+          }).toList();
+          
+          // Auto-select first storage
+          if (_availableStorages.isNotEmpty) {
+            _selectedColdStorageId = _availableStorages.first['id'] as int;
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading storages: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -160,13 +199,79 @@ class _RegisterPartyDialogState extends State<RegisterPartyDialog> {
                       children: [
                         _buildPartyTypeButton('Farmer', 'farmer', Icons.agriculture),
                         const SizedBox(width: 8),
-                        _buildPartyTypeButton('Trader', 'vendor', Icons.person),
+                        _buildPartyTypeButton('Trader / Co.', 'trader', Icons.store),
                         const SizedBox(width: 8),
-                        _buildPartyTypeButton('Company', 'vendor', Icons.business),
+                        _buildPartyTypeButton('Transporter', 'transporter', Icons.local_shipping),
                       ],
                     ),
 
                     const SizedBox(height: 16),
+
+                    // Cold Storage Selection (if multiple available)
+                    if (_availableStorages.length > 1) ...[
+                      const Text(
+                        'Cold Storage *',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<int>(
+                        value: _selectedColdStorageId,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: const Color(0xFFF5F5F5),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none,
+                          ),
+                          prefixIcon: const Icon(Icons.store_mall_directory),
+                        ),
+                        items: _availableStorages.map((storage) {
+                          return DropdownMenuItem<int>(
+                            value: storage['id'] as int,
+                            child: Text(storage['name'] as String),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedColdStorageId = value;
+                          });
+                        },
+                        validator: (v) => v == null ? 'Please select a cold storage' : null,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    
+                    // Show selected storage name if only one available
+                    if (_availableStorages.length == 1) ...[
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE8F5E9),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFF4CAF50)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.store_mall_directory, color: Color(0xFF4CAF50), size: 20),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Storage: ${_availableStorages.first['name']}',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF2E7D32),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
 
                     // Village/City
                     const Text(
@@ -177,18 +282,68 @@ class _RegisterPartyDialogState extends State<RegisterPartyDialog> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _villageController,
-                      decoration: InputDecoration(
-                        hintText: 'Enter village or city name',
-                        filled: true,
-                        fillColor: const Color(0xFFF5F5F5),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                      validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
+                    Autocomplete<String>(
+                      optionsBuilder: (TextEditingValue textEditingValue) {
+                        if (_debounce?.isActive ?? false) _debounce!.cancel();
+                        
+                        if (textEditingValue.text.length < 3) {
+                          return const Iterable<String>.empty();
+                        }
+
+                        final completer = Completer<Iterable<String>>();
+                        
+                        _debounce = Timer(const Duration(milliseconds: 500), () async {
+                          try {
+                            // Check mounted before using context or setting state (though we just complete future here)
+                            final response = await http.get(
+                              Uri.parse('https://nominatim.openstreetmap.org/search?format=json&q=${textEditingValue.text}&countrycodes=in&limit=5'),
+                              headers: {'User-Agent': 'ColdStorageErp/1.0'},
+                            );
+
+                            if (response.statusCode == 200) {
+                              final List data = json.decode(response.body);
+                              if (!completer.isCompleted) {
+                                completer.complete(data.map((item) => item['display_name'] as String).toList());
+                              }
+                            } else {
+                              if (!completer.isCompleted) completer.complete([]);
+                            }
+                          } catch (e) {
+                            debugPrint('Error fetching location: $e');
+                            if (!completer.isCompleted) completer.complete([]);
+                          }
+                        });
+                        
+                        return completer.future;
+                      },
+                      onSelected: (String selection) {
+                        _villageController.text = selection;
+                      },
+                      fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
+                        // Sync with main controller
+                        controller.addListener(() {
+                          if (_villageController.text != controller.text) {
+                            _villageController.text = controller.text;
+                          }
+                        });
+                        
+                        return TextFormField(
+                          controller: controller,
+                          focusNode: focusNode,
+                          onEditingComplete: onEditingComplete,
+                          decoration: InputDecoration(
+                            hintText: 'Enter village or city name',
+                            filled: true,
+                            fillColor: const Color(0xFFF5F5F5),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide.none,
+                            ),
+                            suffixIcon: const Icon(Icons.location_on, color: Colors.grey),
+                          ),
+                          validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
+                        );
+                      },
                     ),
 
                     const SizedBox(height: 16),
@@ -339,11 +494,24 @@ class _RegisterPartyDialogState extends State<RegisterPartyDialog> {
   void _saveParty() {
     if (!_formKey.currentState!.validate()) return;
 
+    // Map frontend types to backend types (farmer/vendor)
+    String backendType = _selectedPartyType;
+    String typeNote = '';
+    
+    if (_selectedPartyType == 'trader') {
+      backendType = 'vendor';
+      typeNote = '\nType: Trader/Company';
+    } else if (_selectedPartyType == 'transporter') {
+      backendType = 'vendor';
+      typeNote = '\nType: Transporter';
+    }
+
     final partyData = {
       'name': _nameController.text.trim(),
       'mobile_number': _phoneController.text.trim(),
-      'person_type': _selectedPartyType,
-      'address': '${_villageController.text.trim()}${_gstController.text.isNotEmpty ? '\nGST: ${_gstController.text.trim()}' : ''}${_notesController.text.isNotEmpty ? '\n${_notesController.text.trim()}' : ''}',
+      'person_type': backendType,
+      'address': '${_villageController.text.trim()}${_gstController.text.isNotEmpty ? '\nGST: ${_gstController.text.trim()}' : ''}${typeNote}${_notesController.text.isNotEmpty ? '\n${_notesController.text.trim()}' : ''}',
+      if (_selectedColdStorageId != null) 'cold_storage': _selectedColdStorageId,
     };
 
     widget.onSave(partyData);

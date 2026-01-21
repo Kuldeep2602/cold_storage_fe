@@ -7,6 +7,7 @@ import 'manager_inventory_tab.dart';
 import 'manager_staff_tab.dart';
 import 'manager_alerts_tab.dart';
 import 'manager_requests_tab.dart';
+import 'manager_room_settings_tab.dart';
 
 class ManagerDashboardScreen extends StatefulWidget {
   const ManagerDashboardScreen({super.key});
@@ -29,6 +30,7 @@ class _ManagerDashboardScreenState extends State<ManagerDashboardScreen> {
       const ManagerRequestsTab(),
       const ManagerInventoryTab(),
       const ManagerStaffTab(),
+      const ManagerRoomSettingsTab(),
       const ManagerAlertsTab(),
     ];
 
@@ -55,8 +57,8 @@ class _ManagerDashboardScreenState extends State<ManagerDashboardScreen> {
           backgroundColor: Colors.white,
           selectedItemColor: const Color(0xFF1976D2),
           unselectedItemColor: const Color(0xFF9E9E9E),
-          selectedFontSize: 12,
-          unselectedFontSize: 12,
+          selectedFontSize: 11,
+          unselectedFontSize: 11,
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.dashboard_outlined),
@@ -77,6 +79,11 @@ class _ManagerDashboardScreenState extends State<ManagerDashboardScreen> {
               icon: Icon(Icons.people_outline),
               activeIcon: Icon(Icons.people),
               label: 'Staff',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.thermostat_outlined),
+              activeIcon: Icon(Icons.thermostat),
+              label: 'Rooms',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.warning_amber_outlined),

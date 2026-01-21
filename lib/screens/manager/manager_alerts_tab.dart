@@ -27,62 +27,30 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
       final appState = context.read<AppState>();
       
       // Load active alerts
-      final alerts = await appState.client.getJson('/api/temperature/alerts/?status=active');
-      
-      // Load rooms for normal status
-      final rooms = await appState.client.getJson('/api/temperature/rooms/');
+      final alerts = await appState.client.getJson(
+        '/api/temperature/alerts/',
+        query: {'status': 'active'},
+      );
       
       if (mounted) {
         final alertsList = (alerts as List?)?.cast<Map<String, dynamic>>() ?? [];
-        final roomsList = (rooms as List?)?.cast<Map<String, dynamic>>() ?? [];
         
-        // Filter rooms without active alerts
-        final alertedRoomIds = alertsList.map((a) => a['room']).toSet();
-        final normalRooms = roomsList.where((r) => 
-          !alertedRoomIds.contains(r['id']) && r['is_within_range'] == true
-        ).toList();
-
         setState(() {
           _activeAlerts = alertsList;
-          _normalRooms = normalRooms.cast<Map<String, dynamic>>();
+          _normalRooms = []; // We'll load this separately if needed
           _isLoading = false;
         });
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _isLoading = false);
-        // Use demo data
         setState(() {
-          _activeAlerts = [
-            {
-              'id': 1,
-              'room_name': 'Room 2',
-              'temperature': '-8',
-              'room_min_temp': '-5',
-              'room_max_temp': '0',
-              'severity': 'high',
-              'time_ago': '10 mins ago',
-            },
-            {
-              'id': 2,
-              'room_name': 'Room 3',
-              'temperature': '7',
-              'room_min_temp': '0',
-              'room_max_temp': '5',
-              'severity': 'medium',
-              'time_ago': '25 mins ago',
-            },
-          ];
-          _normalRooms = [
-            {
-              'id': 1,
-              'name': 'Room 1',
-              'current_temperature': '0',
-              'min_temperature': '-2',
-              'max_temperature': '2',
-            },
-          ];
+          _activeAlerts = [];
+          _normalRooms = [];
+          _isLoading = false;
         });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading alerts: $e')),
+        );
       }
     }
   }
