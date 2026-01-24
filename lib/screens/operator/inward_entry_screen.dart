@@ -5,9 +5,10 @@ import 'package:provider/provider.dart';
 import 'dart:io';
 import 'dart:typed_data';
 
+import '../../l10n/app_localizations.dart';
 import '../../services/person_service.dart';
 import '../../state/app_state.dart';
-import '../../models/user.dart'; // Add this
+import '../../models/user.dart';
 import '../../widgets/register_party_dialog.dart';
 import '../../services/receipt_service.dart';
 
@@ -27,8 +28,8 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
   final _cropVarietyController = TextEditingController();
   final _sizeController = TextEditingController();
   final _quantityController = TextEditingController();
-  final _durationController = TextEditingController(text: '365'); // Default 365 days
-  
+  final _durationController = TextEditingController(text: '365');
+
   Map<String, dynamic>? _selectedParty;
   String? get _selectedPersonId => _selectedParty?['id']?.toString();
   String _selectedQualityGrade = 'A';
@@ -41,7 +42,7 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
 
   final List<String> _qualityGrades = ['A', 'B', 'C'];
   final List<String> _units = ['MT', 'Bags', 'Crates'];
-  
+
   List<String> _storageRooms = [];
   int? _assignedColdStorageId;
 
@@ -56,21 +57,20 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
   void _loadAssignedStorage() {
     final appState = context.read<AppState>();
     final user = appState.user;
-    
+
     if (user != null && user.assignedStorages.isNotEmpty) {
       if (mounted) {
         setState(() {
-            // Default to first storage
             final storage = user.assignedStorages.first;
             _assignedColdStorageId = storage.id;
             _storageRooms = storage.rooms.map((r) => r.roomName).toList();
-            _selectedStorageRoom = null; // Reset room selection
+            _selectedStorageRoom = null;
         });
       }
     } else {
         if (mounted) {
             setState(() {
-                _storageRooms = []; 
+                _storageRooms = [];
                 _assignedColdStorageId = null;
             });
         }
@@ -81,7 +81,7 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
       if (storageId == null) return;
       final appState = context.read<AppState>();
       final user = appState.user;
-      
+
       final storage = user?.assignedStorages.firstWhere((s) => s.id == storageId);
       if (storage != null) {
           setState(() {
@@ -93,10 +93,11 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
   }
 
   Future<void> _pickImage(ImageSource source) async {
+    final l10n = AppLocalizations.of(context);
     try {
       final picker = ImagePicker();
       final pickedFile = await picker.pickImage(source: source);
-      
+
       if (pickedFile != null) {
         final bytes = await pickedFile.readAsBytes();
         setState(() {
@@ -107,7 +108,7 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error picking image: $e')),
+          SnackBar(content: Text('${l10n?.errorPickingImage ?? "Error picking image"}: $e')),
         );
       }
     }
@@ -120,39 +121,37 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
       firstDate: DateTime.now().subtract(const Duration(days: 30)),
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
-    
+
     if (date != null) {
       setState(() => _selectedDate = date);
     }
   }
 
   Future<void> _saveInwardEntry() async {
+    final l10n = AppLocalizations.of(context);
     if (!_formKey.currentState!.validate()) return;
-    
+
     if (_selectedPersonId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a party/farmer')),
-      );
-      return;
-    }
-    
-    if (_selectedStorageRoom == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a storage room')),
+        SnackBar(content: Text(l10n?.pleaseSelectParty ?? 'Please select a party/farmer')),
       );
       return;
     }
 
-    // Check if cold storage is assigned
+    if (_selectedStorageRoom == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n?.pleaseSelectStorageRoom ?? 'Please select a storage room')),
+      );
+      return;
+    }
+
     if (_assignedColdStorageId == null) {
-        // Try to reload or warn
-        // If the user has assignedStorages but state lost?
         final appState = context.read<AppState>();
         if (appState.user?.assignedStorages.isNotEmpty == true) {
              _assignedColdStorageId = appState.user!.assignedStorages.first.id;
         } else {
              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Error: No Storage assigned to this operator.')),
+                SnackBar(content: Text(l10n?.noStorageAssigned ?? 'Error: No Storage assigned to this operator.')),
              );
              return;
         }
@@ -162,18 +161,16 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
 
     try {
       final appState = context.read<AppState>();
-      
-      // Map unit to packaging type
+
       String packagingType = 'bori';
       if (_selectedUnit == 'Crates') {
         packagingType = 'crate';
       } else if (_selectedUnit == 'Bags') {
         packagingType = 'bori';
       } else {
-        packagingType = 'box'; // MT treated as box for now
+        packagingType = 'box';
       }
 
-      // Parse duration
       int? durationDays;
       if (_durationController.text.isNotEmpty) {
         durationDays = int.tryParse(_durationController.text);
@@ -192,30 +189,30 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
         coldStorageId: _assignedColdStorageId,
         imageFile: _selectedImage,
       );
-      
+
       if (!mounted) return;
-      
+
       await showDialog(
         context: context,
         barrierDismissible: false,
         builder: (context) => AlertDialog(
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.check_circle, color: Colors.green),
-              SizedBox(width: 10),
-              Text('Entry Saved'),
+              const Icon(Icons.check_circle, color: Colors.green),
+              const SizedBox(width: 10),
+              Text(l10n?.entrySaved ?? 'Entry Saved'),
             ],
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-               const Text('Inward entry has been successfully recorded.'),
+               Text(l10n?.inwardEntrySuccess ?? 'Inward entry has been successfully recorded.'),
                const SizedBox(height: 20),
                SizedBox(
                  width: double.infinity,
                  child: ElevatedButton.icon(
                    icon: const Icon(Icons.download),
-                   label: const Text('Download Receipt'),
+                   label: Text(l10n?.downloadReceipt ?? 'Download Receipt'),
                    style: ElevatedButton.styleFrom(
                      backgroundColor: Colors.blue,
                      foregroundColor: Colors.white,
@@ -223,7 +220,7 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
                    onPressed: () {
                       final user = context.read<AppState>().user;
                       final storage = user?.assignedStorages.firstWhere(
-                          (s) => s.id == _assignedColdStorageId, 
+                          (s) => s.id == _assignedColdStorageId,
                           orElse: () => user.assignedStorages.first
                       );
 
@@ -250,10 +247,10 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
           actions: [
             TextButton(
               onPressed: () {
-                  Navigator.pop(context); // Close dialog
-                  Navigator.pop(context, true); // Close screen
+                  Navigator.pop(context);
+                  Navigator.pop(context, true);
               },
-              child: const Text('Close'),
+              child: Text(l10n?.close ?? 'Close'),
             ),
           ],
         ),
@@ -262,7 +259,7 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error: $e'),
+          content: Text('${l10n?.error ?? "Error"}: $e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -273,6 +270,8 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -296,22 +295,19 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Inward Entry',
-                          style: TextStyle(
+                        Text(
+                          l10n?.inwardEntry ?? 'Inward Entry',
+                          style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
                         ),
-                         // Display assigned storage name check
                         if (_assignedColdStorageId != null)
-                             // We don't have name handy easily unless we store the object.
-                             // But it's fine.
                              const SizedBox.shrink(),
-                        const Text(
-                          'Stock loading entry',
-                          style: TextStyle(
+                        Text(
+                          l10n?.stockLoadingEntry ?? 'Stock loading entry',
+                          style: const TextStyle(
                             fontSize: 14,
                             color: Colors.white70,
                           ),
@@ -331,7 +327,7 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: const Text('Logout'),
+                    child: Text(l10n?.logout ?? 'Logout'),
                   ),
                 ],
               ),
@@ -345,13 +341,13 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
                   padding: const EdgeInsets.all(20),
                   children: [
                     _buildSection(
-                      title: '1. Party / Farmer Selection',
+                      title: l10n?.partyFarmerSelection ?? '1. Party / Farmer Selection',
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Search Party',
-                            style: TextStyle(
+                          Text(
+                            l10n?.searchParty ?? 'Search Party',
+                            style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
                             ),
@@ -386,7 +382,7 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
                                       focusNode: focusNode,
                                       onEditingComplete: onEditingComplete,
                                       decoration: InputDecoration(
-                                        hintText: 'Search by name or phone',
+                                        hintText: l10n?.searchByNameOrPhone ?? 'Search by name or phone',
                                         prefixIcon: const Icon(Icons.search),
                                         border: OutlineInputBorder(
                                           borderRadius: BorderRadius.circular(8),
@@ -423,7 +419,6 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              // Dropdown button to show all parties
                               Container(
                                 decoration: BoxDecoration(
                                   border: Border.all(color: Colors.grey.shade400),
@@ -431,25 +426,25 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
                                 ),
                                 child: IconButton(
                                   icon: const Icon(Icons.arrow_drop_down, size: 28),
-                                  tooltip: 'View all parties',
+                                  tooltip: l10n?.viewAllParties ?? 'View all parties',
                                   onPressed: () async {
                                     try {
                                       final appState = context.read<AppState>();
                                       final allParties = await appState.persons.searchPersons('');
-                                      
+
                                       if (!mounted) return;
-                                      
+
                                       if (allParties.isEmpty) {
                                         ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(content: Text('No parties found')),
+                                          SnackBar(content: Text(l10n?.noPartiesFound ?? 'No parties found')),
                                         );
                                         return;
                                       }
-                                      
+
                                       final selected = await showDialog<Map<String, dynamic>>(
                                         context: context,
                                         builder: (context) => AlertDialog(
-                                          title: const Text('Select Party'),
+                                          title: Text(l10n?.selectParty ?? 'Select Party'),
                                           content: SizedBox(
                                             width: double.maxFinite,
                                             child: ListView.builder(
@@ -473,12 +468,12 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
                                           actions: [
                                             TextButton(
                                               onPressed: () => Navigator.pop(context),
-                                              child: const Text('Cancel'),
+                                              child: Text(l10n?.cancel ?? 'Cancel'),
                                             ),
                                           ],
                                         ),
                                       );
-                                      
+
                                       if (selected != null) {
                                         setState(() {
                                           _selectedParty = selected;
@@ -488,7 +483,7 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
                                     } catch (e) {
                                       if (mounted) {
                                         ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(content: Text('Error loading parties: $e')),
+                                          SnackBar(content: Text('${l10n?.error ?? "Error"}: $e')),
                                         );
                                       }
                                     }
@@ -500,7 +495,6 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
                           const SizedBox(height: 12),
                           OutlinedButton.icon(
                             onPressed: () async {
-                              // Import at top of file if needed
                               final result = await showDialog<Map<String, dynamic>>(
                                 context: context,
                                 builder: (context) => RegisterPartyDialog(
@@ -508,33 +502,33 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
                                     try {
                                       final appState = context.read<AppState>();
                                       final personService = PersonService(appState.client);
-                                      
+
                                       final createdPerson = await personService.createPerson(partyData);
-                                      
+
                                       Navigator.pop(context, createdPerson);
                                     } catch (e) {
                                       ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(content: Text('Error: $e')),
+                                        SnackBar(content: Text('${l10n?.error ?? "Error"}: $e')),
                                       );
                                     }
                                   },
                                 ),
                               );
-                              
+
                               if (result != null) {
                                 setState(() {
                                   _selectedParty = result;
                                   _autocompleteController?.text = result['name'];
                                 });
-                                
+
                                 if (!mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Party "${result['name']}" registered successfully!')),
+                                  SnackBar(content: Text(l10n?.partyRegisteredSuccess(result['name']) ?? 'Party "${result['name']}" registered successfully!')),
                                 );
                               }
                             },
                             icon: const Icon(Icons.add),
-                            label: const Text('Register New Party'),
+                            label: Text(l10n?.registerNewParty ?? 'Register New Party'),
                             style: OutlinedButton.styleFrom(
                               minimumSize: const Size(double.infinity, 44),
                             ),
@@ -546,38 +540,52 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
                     const SizedBox(height: 20),
 
                     _buildSection(
-                      title: '2. Crop Details',
+                      title: l10n?.cropDetails ?? '2. Crop Details',
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Crop Type *',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                          Text(
+                            '${l10n?.cropType ?? "Crop Type"} *',
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                           ),
                           const SizedBox(height: 8),
                           TextFormField(
                             controller: _cropNameController,
                             decoration: InputDecoration(
-                              hintText: 'Enter crop name',
+                              hintText: l10n?.enterCropName ?? 'Enter crop name',
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
                             ),
-                            validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
+                            validator: (v) => v?.isEmpty ?? true ? (l10n?.required ?? 'Required') : null,
                           ),
                           const SizedBox(height: 12),
-                          const Text(
-                            'Quality Grade (Optional)',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                          Text(
+                            l10n?.qualityGradeOptional ?? 'Quality Grade (Optional)',
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                           ),
                           const SizedBox(height: 8),
                           Row(
                             children: _qualityGrades.map((grade) {
                               final isSelected = _selectedQualityGrade == grade;
+                              String gradeLabel;
+                              switch (grade) {
+                                case 'A':
+                                  gradeLabel = l10n?.gradeA ?? 'Grade A';
+                                  break;
+                                case 'B':
+                                  gradeLabel = l10n?.gradeB ?? 'Grade B';
+                                  break;
+                                case 'C':
+                                  gradeLabel = l10n?.gradeC ?? 'Grade C';
+                                  break;
+                                default:
+                                  gradeLabel = 'Grade $grade';
+                              }
                               return Padding(
                                 padding: const EdgeInsets.only(right: 12),
                                 child: ChoiceChip(
-                                  label: Text('Grade $grade'),
+                                  label: Text(gradeLabel),
                                   selected: isSelected,
                                   onSelected: (selected) {
                                     if (selected) {
@@ -589,15 +597,15 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
                             }).toList(),
                           ),
                           const SizedBox(height: 12),
-                          const Text(
-                            'Size (Optional)',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                          Text(
+                            l10n?.sizeOptional ?? 'Size (Optional)',
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                           ),
                           const SizedBox(height: 8),
                           TextFormField(
                             controller: _sizeController,
                             decoration: InputDecoration(
-                              hintText: 'e.g. Small, Medium, Large, 45mm',
+                              hintText: l10n?.sizeHint ?? 'e.g. Small, Medium, Large, 45mm',
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -610,13 +618,13 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
                     const SizedBox(height: 20),
 
                     _buildSection(
-                      title: '3. Quantity Details',
+                      title: l10n?.quantityDetails ?? '3. Quantity Details',
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Unit *',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                          Text(
+                            '${l10n?.unit ?? "Unit"} *',
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                           ),
                           const SizedBox(height: 8),
                           Row(
@@ -637,21 +645,21 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
                             }).toList(),
                           ),
                           const SizedBox(height: 12),
-                          const Text(
-                            'Quantity *',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                          Text(
+                            '${l10n?.quantity ?? "Quantity"} *',
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                           ),
                           const SizedBox(height: 8),
                           TextFormField(
                             controller: _quantityController,
                             decoration: InputDecoration(
-                              hintText: 'Enter quantity in $_selectedUnit',
+                              hintText: l10n?.enterQuantityIn(_selectedUnit) ?? 'Enter quantity in $_selectedUnit',
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
                             ),
                             keyboardType: TextInputType.number,
-                            validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
+                            validator: (v) => v?.isEmpty ?? true ? (l10n?.required ?? 'Required') : null,
                           ),
                         ],
                       ),
@@ -660,13 +668,13 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
                     const SizedBox(height: 20),
 
                     _buildSection(
-                      title: '4. Visual Record',
+                      title: l10n?.visualRecord ?? '4. Visual Record',
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Upload Image of Goods',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                          Text(
+                            l10n?.uploadImageOfGoods ?? 'Upload Image of Goods',
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                           ),
                           const SizedBox(height: 12),
                           if (_selectedImage != null)
@@ -710,7 +718,7 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
                                       children: [
                                         ListTile(
                                           leading: const Icon(Icons.camera_alt),
-                                          title: const Text('Take Photo'),
+                                          title: Text(l10n?.takePhoto ?? 'Take Photo'),
                                           onTap: () {
                                             Navigator.pop(context);
                                             _pickImage(ImageSource.camera);
@@ -718,7 +726,7 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
                                         ),
                                         ListTile(
                                           leading: const Icon(Icons.photo_library),
-                                          title: const Text('Choose from Gallery'),
+                                          title: Text(l10n?.chooseFromGallery ?? 'Choose from Gallery'),
                                           onTap: () {
                                             Navigator.pop(context);
                                             _pickImage(ImageSource.gallery);
@@ -737,12 +745,12 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
                                 ),
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
-                                  children: const [
-                                    Icon(Icons.camera_alt, size: 40, color: Color(0xFF999999)),
-                                    SizedBox(height: 8),
+                                  children: [
+                                    const Icon(Icons.camera_alt, size: 40, color: Color(0xFF999999)),
+                                    const SizedBox(height: 8),
                                     Text(
-                                      'Tap to capture or upload',
-                                      style: TextStyle(color: Color(0xFF666666)),
+                                      l10n?.tapToCaptureOrUpload ?? 'Tap to capture or upload',
+                                      style: const TextStyle(color: Color(0xFF666666)),
                                     ),
                                   ],
                                 ),
@@ -755,14 +763,14 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
                     const SizedBox(height: 20),
 
                     _buildSection(
-                      title: '5. Storage Details',
+                      title: l10n?.storageDetails ?? '5. Storage Details',
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           if ((context.watch<AppState>().user?.assignedStorages.length ?? 0) > 1) ...[
-                              const Text(
-                                'Storage Facility *',
-                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                              Text(
+                                '${l10n?.storageFacility ?? "Storage Facility"} *',
+                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                               ),
                               const SizedBox(height: 8),
                               DropdownButtonFormField<int>(
@@ -784,21 +792,21 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
                               const SizedBox(height: 12),
                           ],
 
-                          const Text(
-                            'Storage Room *',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                          Text(
+                            '${l10n?.storageRoom ?? "Storage Room"} *',
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                           ),
                           const SizedBox(height: 8),
                           if (_storageRooms.isEmpty)
-                             const Text(
-                               'No storage rooms available for your assigned facility. Please contact manager.',
-                               style: TextStyle(color: Colors.red),
+                             Text(
+                               l10n?.noStorageRoomsAvailable ?? 'No storage rooms available for your assigned facility. Please contact manager.',
+                               style: const TextStyle(color: Colors.red),
                              )
                           else
                             DropdownButtonFormField<String>(
                               value: _selectedStorageRoom,
                               decoration: InputDecoration(
-                                hintText: 'Select storage room',
+                                hintText: l10n?.selectStorageRoom ?? 'Select storage room',
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
@@ -810,12 +818,12 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
                                 );
                               }).toList(),
                               onChanged: (value) => setState(() => _selectedStorageRoom = value),
-                              validator: (v) => v == null ? 'Required' : null,
+                              validator: (v) => v == null ? (l10n?.required ?? 'Required') : null,
                             ),
                           const SizedBox(height: 12),
-                          const Text(
-                            'Storage Duration',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                          Text(
+                            l10n?.storageDuration ?? 'Storage Duration',
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                           ),
                           const SizedBox(height: 8),
                           Column(
@@ -825,21 +833,21 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
                                 spacing: 8,
                                 children: [
                                   ChoiceChip(
-                                    label: const Text('60 Days'),
+                                    label: Text(l10n?.sixtyDays ?? '60 Days'),
                                     selected: _durationController.text == '60',
                                     onSelected: (selected) {
                                       if (selected) setState(() => _durationController.text = '60');
                                     },
                                   ),
                                   ChoiceChip(
-                                    label: const Text('90 Days'),
+                                    label: Text(l10n?.ninetyDays ?? '90 Days'),
                                     selected: _durationController.text == '90',
                                     onSelected: (selected) {
                                       if (selected) setState(() => _durationController.text = '90');
                                     },
                                   ),
                                   ChoiceChip(
-                                    label: const Text('1 Year'),
+                                    label: Text(l10n?.oneYear ?? '1 Year'),
                                     selected: _durationController.text == '365',
                                     onSelected: (selected) {
                                       if (selected) setState(() => _durationController.text = '365');
@@ -853,27 +861,27 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
                                   Expanded(
                                     child: TextFormField(
                                       controller: _durationController,
-                                      enabled: true, // Allow manual input
+                                      enabled: true,
                                       decoration: InputDecoration(
-                                        hintText: 'Enter days',
+                                        hintText: l10n?.enterDays ?? 'Enter days',
                                         border: OutlineInputBorder(
                                           borderRadius: BorderRadius.circular(8),
                                         ),
                                       ),
                                       keyboardType: TextInputType.number,
-                                      onChanged: (val) => setState(() {}), // rebuild to update chips
+                                      onChanged: (val) => setState(() {}),
                                     ),
                                   ),
                                   const SizedBox(width: 12),
-                                  const Text('Days'),
+                                  Text(l10n?.days ?? 'Days'),
                                 ],
                               ),
                             ],
                           ),
                           const SizedBox(height: 12),
-                          const Text(
-                            'Entry Date',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                          Text(
+                            l10n?.entryDate ?? 'Entry Date',
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                           ),
                           const SizedBox(height: 8),
                           InkWell(
@@ -913,9 +921,9 @@ class _InwardEntryScreenState extends State<InwardEntryScreen> {
                                 height: 24,
                                 child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                               )
-                            : const Text(
-                                'Save Inward Entry',
-                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                            : Text(
+                                l10n?.saveInwardEntry ?? 'Save Inward Entry',
+                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                               ),
                       ),
                     ),

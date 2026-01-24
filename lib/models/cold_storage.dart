@@ -15,7 +15,11 @@ class StorageRoom {
     return StorageRoom(
       id: (json['id'] as num).toInt(),
       roomName: (json['room_name'] as String?) ?? '',
-      capacity: json['capacity'] != null ? (json['capacity'] as num).toDouble() : null,
+      capacity: json['capacity'] != null 
+          ? (json['capacity'] is num 
+              ? (json['capacity'] as num).toDouble() 
+              : double.tryParse(json['capacity'].toString()))
+          : null,
       description: (json['description'] as String?) ?? '',
     );
   }

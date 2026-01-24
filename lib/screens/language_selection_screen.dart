@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_localizations.dart';
 import '../state/app_state.dart';
 
 class LanguageSelectionScreen extends StatefulWidget {
@@ -16,7 +17,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
 
   final List<Map<String, String>> _languages = [
     {'code': 'en', 'name': 'English', 'available': 'true'},
-    {'code': 'hi', 'name': 'हिंदी', 'available': 'false'},
+    {'code': 'hi', 'name': 'हिंदी', 'available': 'true'},
     {'code': 'mr', 'name': 'मराठी', 'available': 'false'},
     {'code': 'gu', 'name': 'ગુજરાતી', 'available': 'false'},
     {'code': 'pa', 'name': 'ਪੰਜਾਬੀ', 'available': 'false'},
@@ -26,13 +27,14 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
 
   Future<void> _onContinue() async {
     final lang = _languages.firstWhere((l) => l['code'] == _selectedLanguage);
-    
+    final l10n = AppLocalizations.of(context);
+
     if (lang['available'] != 'true') {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('This language is coming soon! Please select English for now.'),
-          duration: Duration(seconds: 3),
+        SnackBar(
+          content: Text(l10n?.languageComingSoon ?? 'This language is coming soon! Please select English for now.'),
+          duration: const Duration(seconds: 3),
         ),
       );
       return;
@@ -43,20 +45,22 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
     try {
       final appState = context.read<AppState>();
       await appState.setSelectedLanguage(_selectedLanguage);
-      
+
       if (!mounted) return;
       // Navigation will be handled automatically by main.dart after language is set
     } catch (e) {
       if (!mounted) return;
       setState(() => _isProcessing = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text('${l10n?.error ?? "Error"}: $e')),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -64,15 +68,15 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: ConstrainedBox(
             constraints: BoxConstraints(
-              minHeight: MediaQuery.of(context).size.height - 
-                         MediaQuery.of(context).padding.top - 
+              minHeight: MediaQuery.of(context).size.height -
+                         MediaQuery.of(context).padding.top -
                          MediaQuery.of(context).padding.bottom,
             ),
             child: IntrinsicHeight(
               child: Column(
                 children: [
                   const SizedBox(height: 60),
-                  
+
                   // Logo
                   Container(
                     width: 96,
@@ -92,32 +96,32 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // App Title
-                  const Text(
-                    'ColdOne',
-                    style: TextStyle(
+                  Text(
+                    l10n?.appTitle ?? 'ColdOne',
+                    style: const TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF1E88E5),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 48),
-                  
+
                   // Subtitle
-                  const Text(
-                    'Choose your preferred language',
-                    style: TextStyle(
+                  Text(
+                    l10n?.chooseLanguage ?? 'Choose your preferred language',
+                    style: const TextStyle(
                       fontSize: 16,
                       color: Color(0xFF666666),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Language Options
                   Expanded(
                     child: Column(
@@ -177,9 +181,9 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
                       }).toList(),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Continue Button
                   SizedBox(
                     width: double.infinity,
@@ -203,27 +207,27 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
                                 strokeWidth: 2,
                               ),
                             )
-                          : const Text(
-                              'Continue',
-                              style: TextStyle(
+                          : Text(
+                              l10n?.continueText ?? 'Continue',
+                              style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Footer Text
-                  const Text(
-                    'You can change this later in settings',
-                    style: TextStyle(
+                  Text(
+                    l10n?.changeLanguageLater ?? 'You can change this later in settings',
+                    style: const TextStyle(
                       fontSize: 14,
                       color: Color(0xFF999999),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 32),
                 ],
               ),

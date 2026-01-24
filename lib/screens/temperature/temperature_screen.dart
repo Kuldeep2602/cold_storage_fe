@@ -26,7 +26,13 @@ class _TemperatureScreenState extends State<TemperatureScreen> {
   void _reload() {
     final app = context.read<AppState>();
     _future = app.temperature.listLogs().then((data) {
-      final list = (data as List).cast<dynamic>();
+      // Handle paginated response
+      List list;
+      if (data is Map && data.containsKey('results')) {
+        list = data['results'] as List;
+      } else {
+        list = data as List;
+      }
       return list.map((e) => (e as Map).cast<String, dynamic>()).toList();
     });
     setState(() {});

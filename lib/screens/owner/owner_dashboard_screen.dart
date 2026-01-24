@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../state/app_state.dart';
@@ -17,6 +18,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final tabs = <Widget>[
       OwnerOverviewTab(key: const ValueKey('overview')),
       const OwnerColdStoragesTab(),
@@ -48,21 +50,21 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
           unselectedItemColor: const Color(0xFF9E9E9E),
           selectedFontSize: 12,
           unselectedFontSize: 12,
-          items: const [
+          items: [
             BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard_outlined),
-              activeIcon: Icon(Icons.dashboard),
-              label: 'Overview',
+              icon: const Icon(Icons.dashboard_outlined),
+              activeIcon: const Icon(Icons.dashboard),
+              label: l10n.overview,
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.ac_unit_outlined),
-              activeIcon: Icon(Icons.ac_unit),
-              label: 'Storages',
+              icon: const Icon(Icons.ac_unit_outlined),
+              activeIcon: const Icon(Icons.ac_unit),
+              label: l10n.storages,
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.people_outline),
-              activeIcon: Icon(Icons.people),
-              label: 'Staff',
+              icon: const Icon(Icons.people_outline),
+              activeIcon: const Icon(Icons.people),
+              label: l10n.staff,
             ),
           ],
         ),
@@ -70,7 +72,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 }
-
 
 /// Helper function to safely convert any value to double
 double _toDouble(dynamic value) {
@@ -80,7 +81,6 @@ double _toDouble(dynamic value) {
   if (value is String) return double.tryParse(value) ?? 0.0;
   return 0.0;
 }
-
 
 class OwnerOverviewTab extends StatefulWidget {
   const OwnerOverviewTab({super.key});
@@ -106,14 +106,19 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
     try {
       final appState = context.read<AppState>();
       final csId = _selectedColdStorage?['id']?.toString() ?? '';
-      final query = csId.isNotEmpty ? {'cold_storage': csId} : <String, String>{};
-      final data = await appState.client.getJson('/api/inventory/owner-dashboard/', query: query);
-      
+      final query =
+          csId.isNotEmpty ? {'cold_storage': csId} : <String, String>{};
+      final data = await appState.client
+          .getJson('/api/inventory/owner-dashboard/', query: query);
+
       if (mounted && data != null) {
         final response = data as Map<String, dynamic>;
         setState(() {
-          _coldStorages = (response['cold_storages'] as List?)?.cast<Map<String, dynamic>>() ?? [];
-          _selectedColdStorage = response['selected_cold_storage'] as Map<String, dynamic>?;
+          _coldStorages = (response['cold_storages'] as List?)
+                  ?.cast<Map<String, dynamic>>() ??
+              [];
+          _selectedColdStorage =
+              response['selected_cold_storage'] as Map<String, dynamic>?;
           _stats = response['stats'] as Map<String, dynamic>?;
           _isLoading = false;
         });
@@ -125,16 +130,41 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
           _isLoading = false;
           // Demo data
           _coldStorages = [
-            {'id': 1, 'name': 'ColdOne', 'code': 'COLD1', 'display_name': 'ColdOne Nashik Main', 'city': 'Nashik'},
-            {'id': 2, 'name': 'ColdTwo', 'code': 'COLD2', 'display_name': 'ColdTwo Pune', 'city': 'Pune'},
+            {
+              'id': 1,
+              'name': 'ColdOne',
+              'code': 'COLD1',
+              'display_name': 'ColdOne Nashik Main',
+              'city': 'Nashik'
+            },
+            {
+              'id': 2,
+              'name': 'ColdTwo',
+              'code': 'COLD2',
+              'display_name': 'ColdTwo Pune',
+              'city': 'Pune'
+            },
           ];
-          _selectedColdStorage = _coldStorages.isNotEmpty ? _coldStorages.first : null;
+          _selectedColdStorage =
+              _coldStorages.isNotEmpty ? _coldStorages.first : null;
           _stats = {
-            'storage': {'total_capacity': 500, 'occupied': 350, 'available': 150, 'utilization_percent': 70},
+            'storage': {
+              'total_capacity': 500,
+              'occupied': 350,
+              'available': 150,
+              'utilization_percent': 70
+            },
             'this_month': {'inflow': 145, 'outflow': 95},
             'bookings': {'active': 12, 'confirmed': 8, 'pending': 4},
-            'alerts': {'active': 2, 'temperature_alerts': 2, 'equipment_status': 'operational'},
-            'financials': {'estimated_revenue': 4.2, 'avg_storage_duration': 68},
+            'alerts': {
+              'active': 2,
+              'temperature_alerts': 2,
+              'equipment_status': 'operational'
+            },
+            'financials': {
+              'estimated_revenue': 4.2,
+              'avg_storage_duration': 68
+            },
           };
         });
       }
@@ -143,7 +173,8 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
 
   void _onColdStorageChanged(int? id) {
     if (id != null) {
-      final cs = _coldStorages.firstWhere((c) => c['id'] == id, orElse: () => _coldStorages.first);
+      final cs = _coldStorages.firstWhere((c) => c['id'] == id,
+          orElse: () => _coldStorages.first);
       setState(() => _selectedColdStorage = cs);
       _loadData();
     }
@@ -151,6 +182,7 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
@@ -179,24 +211,25 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
                           color: Colors.white.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.analytics_outlined, color: Colors.white, size: 24),
+                        child: const Icon(Icons.analytics_outlined,
+                            color: Colors.white, size: 24),
                       ),
                       const SizedBox(width: 12),
-                      const Expanded(
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Owner Overview',
-                              style: TextStyle(
+                              l10n.ownerOverview,
+                              style: const TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
                               ),
                             ),
                             Text(
-                              'High-level business metrics',
-                              style: TextStyle(
+                              l10n.highLevelMetrics,
+                              style: const TextStyle(
                                 fontSize: 14,
                                 color: Colors.white70,
                               ),
@@ -211,21 +244,25 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white.withOpacity(0.2),
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
                           ),
                         ),
-                        child: const Text('Logout', style: TextStyle(fontWeight: FontWeight.w600)),
+                        child: Text(l10n.logout,
+                            style:
+                                const TextStyle(fontWeight: FontWeight.w600)),
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Cold Storage Dropdown
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(8),
@@ -234,32 +271,77 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
                       children: [
                         Icon(Icons.ac_unit, color: Colors.blue[700], size: 18),
                         const SizedBox(width: 8),
-                        const Text(
-                          'Storage',
-                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                        Text(
+                          l10n.storage,
+                          style:
+                              const TextStyle(fontSize: 12, color: Colors.grey),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: _coldStorages.isEmpty
                               ? Text(
-                                  'No storages',
+                                  l10n.noStorages,
                                   style: TextStyle(color: Colors.grey[600]),
                                 )
                               : DropdownButtonHideUnderline(
                                   child: DropdownButton<int>(
                                     value: _selectedColdStorage?['id'] as int?,
                                     isExpanded: true,
-                                    icon: Icon(Icons.keyboard_arrow_down, color: Colors.blue[700]),
-                                    style: TextStyle(
+                                    icon: Icon(Icons.keyboard_arrow_down,
+                                        color: Colors.blue[700]),
+                                    dropdownColor: Colors.white,
+                                    menuMaxHeight: 320,
+                                    borderRadius: BorderRadius.circular(12),
+                                    style: const TextStyle(
                                       fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.blue[800],
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF0D47A1),
                                     ),
-                                    hint: Text('Select Storage', style: TextStyle(color: Colors.grey[600])),
+                                    hint: Text(l10n.selectStorage,
+                                        style:
+                                            TextStyle(color: Colors.grey[600])),
                                     items: _coldStorages.map((cs) {
                                       return DropdownMenuItem<int>(
                                         value: cs['id'] as int?,
-                                        child: Text(cs['display_name']?.toString() ?? cs['name']?.toString() ?? ''),
+                                        child: Row(
+                                          children: [
+                                            const Icon(Icons.ac_unit,
+                                                size: 18,
+                                                color: Color(0xFF1976D2)),
+                                            const SizedBox(width: 10),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    cs['display_name']
+                                                            ?.toString() ??
+                                                        cs['name']
+                                                            ?.toString() ??
+                                                        '',
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                  if ((cs['city'] ?? '')
+                                                      .toString()
+                                                      .isNotEmpty)
+                                                    Text(
+                                                      cs['city'].toString(),
+                                                      maxLines: 1,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      style: TextStyle(
+                                                        fontSize: 12,
+                                                        color: Colors.grey[600],
+                                                      ),
+                                                    ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       );
                                     }).toList(),
                                     onChanged: _onColdStorageChanged,
@@ -284,24 +366,24 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
                         children: [
                           // Storage Utilization Card
                           _buildStorageUtilizationCard(),
-                          
+
                           const SizedBox(height: 16),
-                          
+
                           // This Month Card
                           _buildThisMonthCard(),
-                          
+
                           const SizedBox(height: 16),
-                          
+
                           // Active Bookings Card
                           _buildActiveBookingsCard(),
-                          
+
                           const SizedBox(height: 16),
-                          
+
                           // Alert Summary Card
                           _buildAlertSummaryCard(),
-                          
+
                           const SizedBox(height: 16),
-                          
+
                           // Revenue and Duration Row
                           _buildFinancialsRow(),
                         ],
@@ -315,6 +397,7 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
   }
 
   Widget _buildStorageUtilizationCard() {
+    final l10n = AppLocalizations.of(context)!;
     final storage = _stats?['storage'] as Map<String, dynamic>? ?? {};
     final utilization = _toDouble(storage['utilization_percent']);
     final occupied = _toDouble(storage['occupied']);
@@ -344,9 +427,9 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
             children: [
               const Icon(Icons.trending_up, color: Colors.white70, size: 20),
               const SizedBox(width: 8),
-              const Text(
-                'Storage Utilization',
-                style: TextStyle(
+              Text(
+                l10n.storageUtilization,
+                style: const TextStyle(
                   fontSize: 16,
                   color: Colors.white70,
                 ),
@@ -366,11 +449,11 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
                 ),
               ),
               const SizedBox(width: 8),
-              const Padding(
-                padding: EdgeInsets.only(bottom: 12),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
                 child: Text(
-                  'of capacity',
-                  style: TextStyle(
+                  l10n.ofCapacity,
+                  style: const TextStyle(
                     fontSize: 16,
                     color: Colors.white70,
                   ),
@@ -383,14 +466,14 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '${occupied.toStringAsFixed(0)} MT occupied',
+                l10n.mtOccupied(occupied.toStringAsFixed(0)),
                 style: const TextStyle(
                   fontSize: 14,
                   color: Colors.white70,
                 ),
               ),
               Text(
-                '${total.toStringAsFixed(0)} MT total',
+                l10n.mtTotal(total.toStringAsFixed(0)),
                 style: const TextStyle(
                   fontSize: 14,
                   color: Colors.white70,
@@ -404,6 +487,7 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
   }
 
   Widget _buildThisMonthCard() {
+    final l10n = AppLocalizations.of(context)!;
     final thisMonth = _stats?['this_month'] as Map<String, dynamic>? ?? {};
     final inflow = _toDouble(thisMonth['inflow']);
     final outflow = _toDouble(thisMonth['outflow']);
@@ -429,9 +513,9 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
             children: [
               Icon(Icons.show_chart, color: Colors.blue[600], size: 20),
               const SizedBox(width: 8),
-              const Text(
-                'This Month',
-                style: TextStyle(
+              Text(
+                l10n.thisMonth,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF333333),
@@ -453,7 +537,7 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Inflow',
+                        l10n.inflow,
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.green[700],
@@ -469,7 +553,7 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
                         ),
                       ),
                       Text(
-                        'MT received',
+                        l10n.mtReceived,
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.green[600],
@@ -491,7 +575,7 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Outflow',
+                        l10n.outflow,
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.orange[700],
@@ -507,7 +591,7 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
                         ),
                       ),
                       Text(
-                        'MT dispatched',
+                        l10n.mtDispatched,
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.orange[600],
@@ -525,6 +609,7 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
   }
 
   Widget _buildActiveBookingsCard() {
+    final l10n = AppLocalizations.of(context)!;
     final bookings = _stats?['bookings'] as Map<String, dynamic>? ?? {};
     final active = bookings['active'] ?? 0;
     final confirmed = bookings['confirmed'] ?? 0;
@@ -554,13 +639,14 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
                   color: const Color(0xFFE3F2FD),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.description, color: Color(0xFF1976D2), size: 20),
+                child: const Icon(Icons.description,
+                    color: Color(0xFF1976D2), size: 20),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Active Bookings',
-                  style: TextStyle(
+                  l10n.activeBookings,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF333333),
@@ -568,7 +654,8 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
                   color: const Color(0xFF4CAF50),
                   borderRadius: BorderRadius.circular(20),
@@ -587,10 +674,10 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
           const SizedBox(height: 16),
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Confirmed',
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                  l10n.confirmed,
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
                 ),
               ),
               Text(
@@ -606,10 +693,10 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
           const Divider(height: 24),
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Pending',
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                  l10n.pending,
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
                 ),
               ),
               Text(
@@ -628,10 +715,12 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
   }
 
   Widget _buildAlertSummaryCard() {
+    final l10n = AppLocalizations.of(context)!;
     final alerts = _stats?['alerts'] as Map<String, dynamic>? ?? {};
     final activeAlerts = alerts['active'] ?? 0;
     final tempAlerts = alerts['temperature_alerts'] ?? 0;
-    final equipmentStatus = alerts['equipment_status']?.toString() ?? 'operational';
+    final equipmentStatus =
+        alerts['equipment_status']?.toString() ?? 'operational';
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -657,13 +746,14 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
                   color: const Color(0xFFFFEBEE),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.warning_amber, color: Color(0xFFF44336), size: 20),
+                child: const Icon(Icons.warning_amber,
+                    color: Color(0xFFF44336), size: 20),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Alert Summary',
-                  style: TextStyle(
+                  l10n.alertSummary,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF333333),
@@ -672,7 +762,8 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
               ),
               if (activeAlerts > 0)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF44336),
                     borderRadius: BorderRadius.circular(20),
@@ -689,12 +780,14 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
             ],
           ),
           const SizedBox(height: 16),
-          
+
           // Temperature Alerts
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: tempAlerts > 0 ? const Color(0xFFFFEBEE) : const Color(0xFFE8F5E9),
+              color: tempAlerts > 0
+                  ? const Color(0xFFFFEBEE)
+                  : const Color(0xFFE8F5E9),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
@@ -704,19 +797,25 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Temperature Alerts',
+                        l10n.temperatureAlerts,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: tempAlerts > 0 ? Colors.red[800] : Colors.green[800],
+                          color: tempAlerts > 0
+                              ? Colors.red[800]
+                              : Colors.green[800],
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        tempAlerts > 0 ? '$tempAlerts rooms out of range' : 'All rooms normal',
+                        tempAlerts > 0
+                            ? l10n.roomsOutOfRange(tempAlerts)
+                            : l10n.allRoomsNormal,
                         style: TextStyle(
                           fontSize: 13,
-                          color: tempAlerts > 0 ? Colors.red[600] : Colors.green[600],
+                          color: tempAlerts > 0
+                              ? Colors.red[600]
+                              : Colors.green[600],
                         ),
                       ),
                     ],
@@ -729,9 +828,9 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
               ],
             ),
           ),
-          
+
           const SizedBox(height: 10),
-          
+
           // Equipment Status
           Container(
             padding: const EdgeInsets.all(12),
@@ -746,7 +845,7 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Equipment Status',
+                        l10n.equipmentStatus,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -755,7 +854,9 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        equipmentStatus == 'operational' ? 'All systems operational' : equipmentStatus,
+                        equipmentStatus == 'operational'
+                            ? l10n.allSystemsOperational
+                            : equipmentStatus,
                         style: TextStyle(
                           fontSize: 13,
                           color: Colors.green[600],
@@ -774,6 +875,7 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
   }
 
   Widget _buildFinancialsRow() {
+    final l10n = AppLocalizations.of(context)!;
     final financials = _stats?['financials'] as Map<String, dynamic>? ?? {};
     final revenue = _toDouble(financials['estimated_revenue']);
     final avgDuration = financials['avg_storage_duration'] ?? 0;
@@ -799,7 +901,7 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Revenue (Est.)',
+                  l10n.revenueEst,
                   style: TextStyle(
                     fontSize: 13,
                     color: Colors.grey[600],
@@ -821,7 +923,7 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '+12% vs last month',
+                  '',
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.green[600],
@@ -851,7 +953,7 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Avg. Duration',
+                  l10n.avgDuration,
                   style: TextStyle(
                     fontSize: 13,
                     color: Colors.grey[600],
@@ -868,7 +970,7 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'days',
+                  l10n.days,
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.grey[600],

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_localizations.dart';
 import '../services/api_client.dart';
 import '../state/app_state.dart';
 
@@ -25,7 +26,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
     (index) => TextEditingController(),
   );
   final List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode());
-  
+
   bool _isLoading = false;
   int _resendTimer = 30;
   Timer? _timer;
@@ -39,7 +40,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
   void _startTimer() {
     _timer?.cancel();
     setState(() => _resendTimer = 30);
-    
+
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_resendTimer > 0) {
         setState(() => _resendTimer--);
@@ -52,9 +53,10 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
   Future<void> _verifyOTP() async {
     if (_isLoading) return;
     final otp = _otpControllers.map((c) => c.text).join();
-    
+    final l10n = AppLocalizations.of(context);
+
     if (otp.length != 6) {
-      _showError('Please enter complete OTP');
+      _showError(l10n?.pleaseEnterCompleteOTP ?? 'Please enter complete OTP');
       return;
     }
 
@@ -66,13 +68,13 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
         phoneNumber: widget.phoneNumber,
         code: otp,
       );
-      
+
       // OTP verified successfully - pop all screens and let main.dart handle navigation
       if (!mounted) return;
-      
+
       // Pop back to root and let Consumer rebuild
       Navigator.of(context).popUntil((route) => route.isFirst);
-      
+
     } on ApiException catch (e) {
       if (!mounted) return;
       _showError(e.body.toString());
@@ -86,18 +88,19 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
 
   Future<void> _resendOTP() async {
     setState(() => _isLoading = true);
+    final l10n = AppLocalizations.of(context);
 
     try {
       final appState = context.read<AppState>();
       await appState.requestOtp(widget.phoneNumber);
-      
+
       if (!mounted) return;
-      
+
       _startTimer();
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('OTP sent successfully'),
+        SnackBar(
+          content: Text(l10n?.otpSentSuccess ?? 'OTP sent successfully'),
           backgroundColor: Colors.green,
         ),
       );
@@ -123,6 +126,8 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -134,32 +139,32 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
             // Show dialog to confirm going back and changing role
             showDialog(
               context: context,
-              builder: (context) => AlertDialog(
-                title: const Text('Go Back?'),
-                content: const Text('Do you want to go back and change your phone number or role?'),
+              builder: (dialogContext) => AlertDialog(
+                title: Text(l10n?.goBack ?? 'Go Back?'),
+                content: Text(l10n?.goBackConfirm ?? 'Do you want to go back and change your phone number or role?'),
                 actions: [
                   TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel'),
+                    onPressed: () => Navigator.pop(dialogContext),
+                    child: Text(l10n?.cancel ?? 'Cancel'),
                   ),
                   TextButton(
                     onPressed: () {
-                      Navigator.pop(context); // Close dialog
+                      Navigator.pop(dialogContext); // Close dialog
                       Navigator.pop(context); // Go back to phone screen
                     },
-                    child: const Text('Change Phone'),
+                    child: Text(l10n?.changePhone ?? 'Change Phone'),
                   ),
                   TextButton(
                     onPressed: () async {
                       // Clear role selection and go back to role screen
                       final appState = context.read<AppState>();
                       await appState.clearSelectedRole();
-                      
+
                       if (!mounted) return;
-                      Navigator.pop(context); // Close dialog
+                      Navigator.pop(dialogContext); // Close dialog
                       Navigator.of(context).popUntil((route) => route.isFirst);
                     },
-                    child: const Text('Change Role'),
+                    child: Text(l10n?.changeRole ?? 'Change Role'),
                   ),
                 ],
               ),
@@ -174,31 +179,31 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 20),
-              
+
               // Title
-              const Text(
-                'Verify OTP',
-                style: TextStyle(
+              Text(
+                l10n?.verifyOTP ?? 'Verify OTP',
+                style: const TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF333333),
                 ),
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               // Subtitle
               Text(
-                'Enter the 6-digit code sent to\n${widget.phoneNumber}',
+                '${l10n?.enterOTPCode ?? "Enter the 6-digit code sent to"}\n${widget.phoneNumber}',
                 style: TextStyle(
                   fontSize: 16,
                   color: Colors.grey.shade600,
                   height: 1.5,
                 ),
               ),
-              
+
               const SizedBox(height: 40),
-              
+
               // OTP Input Fields
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -239,7 +244,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                         } else if (value.isEmpty && index > 0) {
                           _focusNodes[index - 1].requestFocus();
                         }
-                        
+
                         // Auto-submit when all 6 digits are entered
                         if (index == 5 && value.length == 1) {
                           _verifyOTP();
@@ -249,7 +254,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                   );
                 }),
               ),
-              
+
               if (widget.debugOTP != null) ...[
                 const SizedBox(height: 16),
                 Container(
@@ -264,7 +269,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                       const Icon(Icons.info_outline, color: Colors.amber, size: 20),
                       const SizedBox(width: 8),
                       Text(
-                        'Debug OTP: ${widget.debugOTP}',
+                        l10n?.debugOTP(widget.debugOTP!) ?? 'Debug OTP: ${widget.debugOTP}',
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -275,9 +280,9 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                   ),
                 ),
               ],
-              
+
               const SizedBox(height: 32),
-              
+
               // Verify Button
               SizedBox(
                 width: double.infinity,
@@ -301,26 +306,26 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                             strokeWidth: 2,
                           ),
                         )
-                      : const Text(
-                          'Verify OTP',
-                          style: TextStyle(
+                      : Text(
+                          l10n?.verifyOTP ?? 'Verify OTP',
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                 ),
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Resend OTP
               Center(
                 child: TextButton(
                   onPressed: _resendTimer == 0 && !_isLoading ? _resendOTP : null,
                   child: Text(
                     _resendTimer > 0
-                        ? 'Resend OTP in ${_resendTimer}s'
-                        : 'Resend OTP',
+                        ? (l10n?.resendOTPIn(_resendTimer) ?? 'Resend OTP in ${_resendTimer}s')
+                        : (l10n?.resendOTP ?? 'Resend OTP'),
                     style: TextStyle(
                       fontSize: 16,
                       color: _resendTimer > 0

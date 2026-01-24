@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+import '../l10n/app_localizations.dart';
 import '../state/app_state.dart';
 
 class RegisterPartyDialog extends StatefulWidget {
@@ -24,33 +25,33 @@ class _RegisterPartyDialogState extends State<RegisterPartyDialog> {
   final _villageController = TextEditingController();
   final _gstController = TextEditingController();
   final _notesController = TextEditingController();
-  
+
   String _selectedPartyType = 'farmer';
   bool _isLoading = false;
   Timer? _debounce;
-  
+
   // Cold storage selection
   List<Map<String, dynamic>> _availableStorages = [];
   int? _selectedColdStorageId;
-  
+
   @override
   void initState() {
     super.initState();
     _loadAvailableStorages();
   }
-  
+
   Future<void> _loadAvailableStorages() async {
     try {
       final appState = context.read<AppState>();
       final user = appState.user;
-      
+
       if (user != null && user.assignedStorages.isNotEmpty) {
         setState(() {
           _availableStorages = user.assignedStorages.map((cs) => {
             'id': cs.id,
             'name': cs.displayName,
           }).toList();
-          
+
           // Auto-select first storage
           if (_availableStorages.isNotEmpty) {
             _selectedColdStorageId = _availableStorages.first['id'] as int;
@@ -64,6 +65,8 @@ class _RegisterPartyDialogState extends State<RegisterPartyDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
@@ -84,10 +87,10 @@ class _RegisterPartyDialogState extends State<RegisterPartyDialog> {
                 children: [
                   const Icon(Icons.person_add, color: Colors.white, size: 24),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Register New Party',
-                      style: TextStyle(
+                      l10n?.registerNewParty ?? 'Register New Party',
+                      style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
@@ -117,13 +120,13 @@ class _RegisterPartyDialogState extends State<RegisterPartyDialog> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
-                        children: const [
-                          Icon(Icons.timer, color: Color(0xFF1E88E5), size: 20),
-                          SizedBox(width: 8),
+                        children: [
+                          const Icon(Icons.timer, color: Color(0xFF1E88E5), size: 20),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Quick registration - takes less than 30 seconds',
-                              style: TextStyle(
+                              l10n?.quickRegistration ?? 'Quick registration - takes less than 30 seconds',
+                              style: const TextStyle(
                                 fontSize: 13,
                                 color: Color(0xFF1565C0),
                               ),
@@ -136,9 +139,9 @@ class _RegisterPartyDialogState extends State<RegisterPartyDialog> {
                     const SizedBox(height: 20),
 
                     // Name
-                    const Text(
-                      'Name *',
-                      style: TextStyle(
+                    Text(
+                      '${l10n?.name ?? "Name"} *',
+                      style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
@@ -147,7 +150,7 @@ class _RegisterPartyDialogState extends State<RegisterPartyDialog> {
                     TextFormField(
                       controller: _nameController,
                       decoration: InputDecoration(
-                        hintText: 'Enter full name',
+                        hintText: l10n?.enterFullName ?? 'Enter full name',
                         filled: true,
                         fillColor: const Color(0xFFF5F5F5),
                         border: OutlineInputBorder(
@@ -155,15 +158,15 @@ class _RegisterPartyDialogState extends State<RegisterPartyDialog> {
                           borderSide: BorderSide.none,
                         ),
                       ),
-                      validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
+                      validator: (v) => v?.isEmpty ?? true ? (l10n?.required ?? 'Required') : null,
                     ),
 
                     const SizedBox(height: 16),
 
                     // Phone Number
-                    const Text(
-                      'Phone Number *',
-                      style: TextStyle(
+                    Text(
+                      '${l10n?.phoneNumber ?? "Phone Number"} *',
+                      style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
@@ -181,15 +184,15 @@ class _RegisterPartyDialogState extends State<RegisterPartyDialog> {
                           borderSide: BorderSide.none,
                         ),
                       ),
-                      validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
+                      validator: (v) => v?.isEmpty ?? true ? (l10n?.required ?? 'Required') : null,
                     ),
 
                     const SizedBox(height: 16),
 
                     // Party Type
-                    const Text(
-                      'Party Type *',
-                      style: TextStyle(
+                    Text(
+                      '${l10n?.partyType ?? "Party Type"} *',
+                      style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
@@ -197,11 +200,11 @@ class _RegisterPartyDialogState extends State<RegisterPartyDialog> {
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        _buildPartyTypeButton('Farmer', 'farmer', Icons.agriculture),
+                        _buildPartyTypeButton(l10n?.farmer ?? 'Farmer', 'farmer', Icons.agriculture),
                         const SizedBox(width: 8),
-                        _buildPartyTypeButton('Trader / Co.', 'trader', Icons.store),
+                        _buildPartyTypeButton(l10n?.traderCompany ?? 'Trader / Co.', 'trader', Icons.store),
                         const SizedBox(width: 8),
-                        _buildPartyTypeButton('Transporter', 'transporter', Icons.local_shipping),
+                        _buildPartyTypeButton(l10n?.transporter ?? 'Transporter', 'transporter', Icons.local_shipping),
                       ],
                     ),
 
@@ -209,9 +212,9 @@ class _RegisterPartyDialogState extends State<RegisterPartyDialog> {
 
                     // Cold Storage Selection (if multiple available)
                     if (_availableStorages.length > 1) ...[
-                      const Text(
-                        'Cold Storage *',
-                        style: TextStyle(
+                      Text(
+                        '${l10n?.coldStorage ?? "Cold Storage"} *',
+                        style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
@@ -239,11 +242,11 @@ class _RegisterPartyDialogState extends State<RegisterPartyDialog> {
                             _selectedColdStorageId = value;
                           });
                         },
-                        validator: (v) => v == null ? 'Please select a cold storage' : null,
+                        validator: (v) => v == null ? (l10n?.pleaseSelectColdStorage ?? 'Please select a cold storage') : null,
                       ),
                       const SizedBox(height: 16),
                     ],
-                    
+
                     // Show selected storage name if only one available
                     if (_availableStorages.length == 1) ...[
                       Container(
@@ -259,7 +262,7 @@ class _RegisterPartyDialogState extends State<RegisterPartyDialog> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                'Storage: ${_availableStorages.first['name']}',
+                                '${l10n?.storage ?? "Storage"}: ${_availableStorages.first['name']}',
                                 style: const TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
@@ -274,9 +277,9 @@ class _RegisterPartyDialogState extends State<RegisterPartyDialog> {
                     ],
 
                     // Village/City
-                    const Text(
-                      'Village / City *',
-                      style: TextStyle(
+                    Text(
+                      '${l10n?.villageCity ?? "Village / City"} *',
+                      style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
@@ -285,16 +288,15 @@ class _RegisterPartyDialogState extends State<RegisterPartyDialog> {
                     Autocomplete<String>(
                       optionsBuilder: (TextEditingValue textEditingValue) {
                         if (_debounce?.isActive ?? false) _debounce!.cancel();
-                        
+
                         if (textEditingValue.text.length < 3) {
                           return const Iterable<String>.empty();
                         }
 
                         final completer = Completer<Iterable<String>>();
-                        
+
                         _debounce = Timer(const Duration(milliseconds: 500), () async {
                           try {
-                            // Check mounted before using context or setting state (though we just complete future here)
                             final response = await http.get(
                               Uri.parse('https://nominatim.openstreetmap.org/search?format=json&q=${textEditingValue.text}&countrycodes=in&limit=5'),
                               headers: {'User-Agent': 'ColdStorageErp/1.0'},
@@ -313,7 +315,7 @@ class _RegisterPartyDialogState extends State<RegisterPartyDialog> {
                             if (!completer.isCompleted) completer.complete([]);
                           }
                         });
-                        
+
                         return completer.future;
                       },
                       onSelected: (String selection) {
@@ -326,13 +328,13 @@ class _RegisterPartyDialogState extends State<RegisterPartyDialog> {
                             _villageController.text = controller.text;
                           }
                         });
-                        
+
                         return TextFormField(
                           controller: controller,
                           focusNode: focusNode,
                           onEditingComplete: onEditingComplete,
                           decoration: InputDecoration(
-                            hintText: 'Enter village or city name',
+                            hintText: l10n?.enterVillageOrCity ?? 'Enter village or city name',
                             filled: true,
                             fillColor: const Color(0xFFF5F5F5),
                             border: OutlineInputBorder(
@@ -341,7 +343,7 @@ class _RegisterPartyDialogState extends State<RegisterPartyDialog> {
                             ),
                             suffixIcon: const Icon(Icons.location_on, color: Colors.grey),
                           ),
-                          validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
+                          validator: (v) => v?.isEmpty ?? true ? (l10n?.required ?? 'Required') : null,
                         );
                       },
                     ),
@@ -349,9 +351,9 @@ class _RegisterPartyDialogState extends State<RegisterPartyDialog> {
                     const SizedBox(height: 16),
 
                     // GST Number (Optional)
-                    const Text(
-                      'GST Number (Optional)',
-                      style: TextStyle(
+                    Text(
+                      l10n?.gstNumberOptional ?? 'GST Number (Optional)',
+                      style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
@@ -373,9 +375,9 @@ class _RegisterPartyDialogState extends State<RegisterPartyDialog> {
                     const SizedBox(height: 16),
 
                     // Notes (Optional)
-                    const Text(
-                      'Notes (Optional)',
-                      style: TextStyle(
+                    Text(
+                      l10n?.notesOptional ?? 'Notes (Optional)',
+                      style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
@@ -385,7 +387,7 @@ class _RegisterPartyDialogState extends State<RegisterPartyDialog> {
                       controller: _notesController,
                       maxLines: 3,
                       decoration: InputDecoration(
-                        hintText: 'Add any additional notes...',
+                        hintText: l10n?.addNotes ?? 'Add any additional notes...',
                         filled: true,
                         fillColor: const Color(0xFFF5F5F5),
                         border: OutlineInputBorder(
@@ -413,7 +415,7 @@ class _RegisterPartyDialogState extends State<RegisterPartyDialog> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: const Text('Cancel'),
+                      child: Text(l10n?.cancel ?? 'Cancel'),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -438,9 +440,9 @@ class _RegisterPartyDialogState extends State<RegisterPartyDialog> {
                                 strokeWidth: 2,
                               ),
                             )
-                          : const Text(
-                              'Save Party',
-                              style: TextStyle(fontWeight: FontWeight.w600),
+                          : Text(
+                              l10n?.saveParty ?? 'Save Party',
+                              style: const TextStyle(fontWeight: FontWeight.w600),
                             ),
                     ),
                   ),
@@ -497,7 +499,7 @@ class _RegisterPartyDialogState extends State<RegisterPartyDialog> {
     // Map frontend types to backend types (farmer/vendor)
     String backendType = _selectedPartyType;
     String typeNote = '';
-    
+
     if (_selectedPartyType == 'trader') {
       backendType = 'vendor';
       typeNote = '\nType: Trader/Company';

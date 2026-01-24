@@ -1,0 +1,671 @@
+{
+  "@@locale": "hi",
+
+  "appTitle": "कोल्डवन",
+  "storageLogin": "स्टोरेज लॉगिन",
+  "phoneNumber": "फ़ोन नंबर",
+  "enterPhoneNumber": "फ़ोन नंबर दर्ज करें",
+  "enterMobileNumber": "मोबाइल नंबर दर्ज करें",
+  "getOTP": "OTP प्राप्त करें",
+  "sendOTP": "OTP भेजें",
+  "enterOTP": "OTP दर्ज करें",
+  "verify": "सत्यापित करें",
+  "verifyOTP": "OTP सत्यापित करें",
+  "logout": "लॉग आउट",
+  "continueText": "जारी रखें",
+
+  "chooseLanguage": "अपनी पसंदीदा भाषा चुनें",
+  "changeLanguageLater": "आप इसे बाद में सेटिंग्स में बदल सकते हैं",
+  "languageComingSoon": "यह भाषा जल्द आ रही है! कृपया अभी अंग्रेज़ी चुनें।",
+
+  "selectRole": "भूमिका चुनें",
+  "operator": "ऑपरेटर",
+  "operatorDescription": "दैनिक कार्यों को संभालता है",
+  "technician": "तकनीशियन",
+  "technicianDescription": "तकनीकी पहलुओं का प्रबंधन करता है",
+  "manager": "प्रबंधक",
+  "managerDescription": "टीम और संचालन की देखरेख करता है",
+  "owner": "मालिक",
+  "ownerDescription": "पूर्ण पहुंच और नियंत्रण",
+  "admin": "व्यवस्थापक",
+
+  "secureLogin": "स्टोरेज संचालन के लिए सुरक्षित लॉगिन",
+  "pleaseEnterPhone": "कृपया अपना फ़ोन नंबर दर्ज करें",
+  "pleaseEnterValidPhone": "कृपया एक वैध फ़ोन नंबर दर्ज करें",
+  "unauthorizedContact": "अनधिकृत: कृपया पंजीकरण के लिए अपने व्यवस्थापक से संपर्क करें।",
+
+  "enterOTPCode": "इस नंबर पर भेजा गया 6 अंकों का कोड दर्ज करें",
+  "pleaseEnterCompleteOTP": "कृपया पूरा OTP दर्ज करें",
+  "otpSentSuccess": "OTP सफलतापूर्वक भेजा गया",
+  "goBack": "वापस जाएं?",
+  "goBackConfirm": "क्या आप वापस जाकर अपना फ़ोन नंबर या भूमिका बदलना चाहते हैं?",
+  "changePhone": "फ़ोन बदलें",
+  "changeRole": "भूमिका बदलें",
+  "resendOTPIn": "{seconds} सेकंड में OTP पुनः भेजें",
+  "@resendOTPIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "resendOTP": "OTP पुनः भेजें",
+  "debugOTP": "डीबग OTP: {otp}",
+  "@debugOTP": {
+    "placeholders": {
+      "otp": {
+        "type": "String"
+      }
+    }
+  },
+
+  "accessPending": "पहुंच लंबित",
+  "accountCreatedNoAccess": "आपका खाता बना दिया गया है लेकिन आपको अभी पहुंच नहीं है।",
+  "contactAdminTo": "कृपया अपने व्यवस्थापक से संपर्क करें:",
+  "assignRole": "आपको एक भूमिका सौंपें (ऑपरेटर/प्रबंधक)",
+  "activateAccount": "अपना खाता सक्रिय करें",
+  "phone": "फ़ोन",
+  "statusLabel": "स्थिति",
+  "roleLabel": "भूमिका",
+  "notAssigned": "नियुक्त नहीं",
+  "logoutTryAgain": "लॉगआउट करें और पुनः प्रयास करें",
+
+  "dashboard": "डैशबोर्ड",
+  "requests": "अनुरोध",
+  "inventory": "इन्वेंटरी",
+  "staff": "कर्मचारी",
+  "rooms": "कमरे",
+  "alerts": "अलर्ट",
+  "reports": "रिपोर्ट",
+  "temp": "तापमान",
+  "ledger": "खाता बही",
+  "payments": "भुगतान",
+  "profile": "प्रोफ़ाइल",
+
+  "operatorMenu": "ऑपरेटर मेनू",
+  "selectOperation": "संचालन चुनें",
+  "inwardEntry": "आवक प्रविष्टि",
+  "stockLoadingEntry": "स्टॉक लोडिंग प्रविष्टि",
+  "outwardEntry": "जावक प्रविष्टि",
+  "stockUnloadingEntry": "स्टॉक अनलोडिंग प्रविष्टि",
+
+  "technicianMenu": "तकनीशियन मेनू",
+  "temperatureMonitoring": "तापमान निगरानी",
+  "monitorRoomTemp": "कमरे के तापमान की निगरानी करें",
+
+  "coldStorages": "कोल्ड स्टोरेज",
+  "addColdStorage": "कोल्ड स्टोरेज जोड़ें",
+  "coldStorageName": "कोल्ड स्टोरेज का नाम",
+  "coldStorageCode": "कोल्ड स्टोरेज कोड",
+  "location": "स्थान",
+  "totalCapacity": "कुल क्षमता",
+  "availableCapacity": "उपलब्ध क्षमता",
+  "temperature": "तापमान",
+  "status": "स्थिति",
+  "active": "सक्रिय",
+  "inactive": "निष्क्रिय",
+
+  "staffManagement": "कर्मचारी प्रबंधन",
+  "addStaffMember": "कर्मचारी जोड़ें",
+  "name": "नाम",
+  "role": "भूमिका",
+  "assignStorages": "स्टोरेज आवंटित करें",
+  "assignRooms": "कमरे आवंटित करें",
+  "inwardOutwardOperator": "आवक/जावक संचालक",
+  "technicianTemp": "तकनीशियन (तापमान)",
+
+  "roomManagement": "कमरा प्रबंधन",
+  "addRoom": "कमरा जोड़ें",
+  "roomName": "कमरे का नाम",
+  "roomNumber": "कमरा नंबर",
+  "capacity": "क्षमता",
+  "currentOccupancy": "वर्तमान अधिभोग",
+
+  "temperatureAlerts": "तापमान अलर्ट",
+  "critical": "गंभीर",
+  "warning": "चेतावनी",
+  "normal": "सामान्य",
+  "resolveAlert": "अलर्ट समाधान करें",
+
+  "productName": "उत्पाद का नाम",
+  "quantity": "मात्रा",
+  "unit": "इकाई",
+  "customerName": "ग्राहक का नाम",
+  "entryDate": "प्रवेश तिथि",
+  "exitDate": "निकास तिथि",
+
+  "save": "सहेजें",
+  "cancel": "रद्द करें",
+  "delete": "हटाएं",
+  "edit": "संपादित करें",
+  "add": "जोड़ें",
+  "update": "अपडेट करें",
+  "search": "खोजें",
+  "filter": "फ़िल्टर",
+  "refresh": "ताज़ा करें",
+  "close": "बंद करें",
+  "required": "आवश्यक",
+
+  "error": "त्रुटि",
+  "success": "सफलता",
+  "loading": "लोड हो रहा है...",
+  "noDataAvailable": "कोई डेटा उपलब्ध नहीं",
+  "confirmDelete": "क्या आप वाकई हटाना चाहते हैं?",
+
+  "kg": "किग्रा",
+  "tons": "टन",
+  "liters": "लीटर",
+  "units": "इकाइयाँ",
+  "days": "दिन",
+
+  "selectLanguage": "भाषा चुनें",
+  "english": "English",
+  "hindi": "हिंदी",
+
+  "apiBaseUrl": "API बेस URL",
+  "apiBaseUrlExample": "उदाहरण: http://127.0.0.1:8000",
+  "saveApiUrl": "API URL सहेजें",
+  "baseUrlSaved": "बेस URL सहेजा गया",
+  "manageUsers": "उपयोगकर्ता प्रबंधित करें",
+
+  "partyFarmerSelection": "1. पार्टी / किसान चयन",
+  "searchParty": "पार्टी खोजें",
+  "searchByNameOrPhone": "नाम या फ़ोन से खोजें",
+  "viewAllParties": "सभी पार्टियां देखें",
+  "selectParty": "पार्टी चुनें",
+  "noPartiesFound": "कोई पार्टी नहीं मिली",
+  "registerNewParty": "नई पार्टी पंजीकृत करें",
+  "partyRegisteredSuccess": "पार्टी \"{name}\" सफलतापूर्वक पंजीकृत!",
+  "@partyRegisteredSuccess": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+
+  "cropDetails": "2. फसल विवरण",
+  "cropType": "फसल का प्रकार",
+  "enterCropName": "फसल का नाम दर्ज करें",
+  "qualityGradeOptional": "गुणवत्ता ग्रेड (वैकल्पिक)",
+  "gradeA": "ग्रेड A",
+  "gradeB": "ग्रेड B",
+  "gradeC": "ग्रेड C",
+  "sizeOptional": "आकार (वैकल्पिक)",
+  "sizeHint": "जैसे छोटा, मध्यम, बड़ा, 45mm",
+
+  "quantityDetails": "3. मात्रा विवरण",
+  "enterQuantityIn": "{unit} में मात्रा दर्ज करें",
+  "@enterQuantityIn": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+
+  "visualRecord": "4. दृश्य रिकॉर्ड",
+  "uploadImageOfGoods": "माल की छवि अपलोड करें",
+  "tapToCaptureOrUpload": "कैप्चर या अपलोड करने के लिए टैप करें",
+  "takePhoto": "फोटो लें",
+  "chooseFromGallery": "गैलरी से चुनें",
+  "errorPickingImage": "छवि चुनने में त्रुटि",
+
+  "storageDetails": "5. स्टोरेज विवरण",
+  "storageFacility": "स्टोरेज सुविधा",
+  "storageRoom": "स्टोरेज कमरा",
+  "selectStorageRoom": "स्टोरेज कमरा चुनें",
+  "noStorageRoomsAvailable": "आपकी आवंटित सुविधा के लिए कोई स्टोरेज कमरा उपलब्ध नहीं है। कृपया प्रबंधक से संपर्क करें।",
+  "storageDuration": "स्टोरेज अवधि",
+  "sixtyDays": "60 दिन",
+  "ninetyDays": "90 दिन",
+  "oneYear": "1 वर्ष",
+  "enterDays": "दिन दर्ज करें",
+
+  "saveInwardEntry": "आवक प्रविष्टि सहेजें",
+  "entrySaved": "प्रविष्टि सहेजी गई",
+  "inwardEntrySuccess": "आवक प्रविष्टि सफलतापूर्वक दर्ज की गई।",
+  "downloadReceipt": "रसीद डाउनलोड करें",
+  "pleaseSelectParty": "कृपया एक पार्टी/किसान चुनें",
+  "pleaseSelectStorageRoom": "कृपया एक स्टोरेज कमरा चुनें",
+  "noStorageAssigned": "त्रुटि: इस ऑपरेटर को कोई स्टोरेज आवंटित नहीं है।",
+
+  "selectBookingParty": "1. बुकिंग / पार्टी चुनें",
+  "searchStoredInventory": "संग्रहित इन्वेंटरी खोजें",
+  "searchByPartyPhoneCrop": "पार्टी, फ़ोन या फसल से खोजें",
+  "noInventoryFound": "कोई इन्वेंटरी नहीं मिली",
+  "availableInventory": "उपलब्ध इन्वेंटरी",
+  "itemsCount": "{count} आइटम",
+  "@itemsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "party": "पार्टी",
+  "available": "उपलब्ध",
+  "quantityToRemove": "निकालने की मात्रा",
+  "enterQuantity": "मात्रा दर्ज करें",
+  "confirmOutward": "जावक की पुष्टि करें",
+  "outwardRecorded": "जावक दर्ज",
+  "outwardReceiptGenerated": "जावक रसीद #{number} बनाई गई।",
+  "@outwardReceiptGenerated": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "pleaseEnterValidQuantity": "कृपया एक वैध मात्रा दर्ज करें",
+  "quantityExceedsStock": "मात्रा उपलब्ध स्टॉक ({available}) से अधिक है",
+  "@quantityExceedsStock": {
+    "placeholders": {
+      "available": {
+        "type": "String"
+      }
+    }
+  },
+  "processingOutwardEntry": "जावक प्रविष्टि प्रोसेस हो रही है...",
+  "errorLoadingInventory": "इन्वेंटरी लोड करने में त्रुटि",
+
+  "quickRegistration": "त्वरित पंजीकरण - 30 सेकंड से कम समय लगता है",
+  "enterFullName": "पूरा नाम दर्ज करें",
+  "partyType": "पार्टी का प्रकार",
+  "farmer": "किसान",
+  "traderCompany": "व्यापारी / कंपनी",
+  "transporter": "ट्रांसपोर्टर",
+  "coldStorage": "कोल्ड स्टोरेज",
+  "pleaseSelectColdStorage": "कृपया कोल्ड स्टोरेज चुनें",
+  "storage": "स्टोरेज",
+  "villageCity": "गांव / शहर",
+  "enterVillageOrCity": "गांव या शहर का नाम दर्ज करें",
+  "gstNumberOptional": "GST नंबर (वैकल्पिक)",
+  "notesOptional": "नोट्स (वैकल्पिक)",
+  "addNotes": "अतिरिक्त नोट्स जोड़ें...",
+  "saveParty": "पार्टी सहेजें",
+
+  "ownerOverview": "मालिक अवलोकन",
+  "highLevelMetrics": "उच्च स्तरीय व्यापार मेट्रिक्स",
+  "overview": "अवलोकन",
+  "storages": "स्टोरेज",
+  "noStorages": "कोई स्टोरेज नहीं",
+  "selectStorage": "स्टोरेज चुनें",
+  "storageUtilization": "स्टोरेज उपयोग",
+  "ofCapacity": "क्षमता का",
+  "mtOccupied": "{value} MT भरा हुआ",
+  "@mtOccupied": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "mtTotal": "{value} MT कुल",
+  "@mtTotal": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "thisMonth": "इस महीने",
+  "inflow": "आवक",
+  "mtReceived": "MT प्राप्त",
+  "outflow": "जावक",
+  "mtDispatched": "MT भेजा गया",
+  "activeBookings": "सक्रिय बुकिंग",
+  "confirmed": "पुष्टि",
+  "pending": "लंबित",
+  "alertSummary": "अलर्ट सारांश",
+  "roomsOutOfRange": "{count} कमरे सीमा से बाहर",
+  "@roomsOutOfRange": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "allRoomsNormal": "सभी कमरे सामान्य",
+  "equipmentStatus": "उपकरण स्थिति",
+  "allSystemsOperational": "सभी सिस्टम चालू",
+  "revenueEst": "राजस्व (अनुमानित)",
+  "avgDuration": "औसत अवधि",
+
+  "manageManagersStaff": "प्रबंधक और कर्मचारी प्रबंधित करें",
+  "addNewStaffMember": "नया कर्मचारी जोड़ें",
+  "phoneNumberRequired": "फ़ोन नंबर *",
+  "phoneHint": "+91 ",
+  "nameRequired": "नाम *",
+  "enterName": "नाम दर्ज करें",
+  "roleRequired": "भूमिका *",
+  "fullAccessDescription": "स्टोरेज, कर्मचारी और इन्वेंटरी प्रबंधित करने की पूर्ण पहुंच",
+  "inwardOutwardOnly": "केवल आवक/जावक संचालन",
+  "tempMonitoringAlerts": "तापमान निगरानी और अलर्ट",
+  "phoneNameRequired": "फ़ोन नंबर और नाम आवश्यक हैं",
+  "staffAddedSuccess": "कर्मचारी सफलतापूर्वक जोड़ा गया",
+  "addStaff": "कर्मचारी जोड़ें",
+  "editStaffMember": "कर्मचारी संपादित करें",
+  "phoneLabel": "फ़ोन: {phone}",
+  "@phoneLabel": {
+    "placeholders": {
+      "phone": {
+        "type": "String"
+      }
+    }
+  },
+  "fullAccess": "पूर्ण पहुंच",
+  "inwardOutward": "आवक/जावक",
+  "saveChanges": "बदलाव सहेजें",
+  "staffUpdatedSuccess": "कर्मचारी सफलतापूर्वक अपडेट किया गया",
+  "managers": "प्रबंधक",
+  "canManageOperations": "स्टोरेज संचालन प्रबंधित कर सकते हैं",
+  "operators": "ऑपरेटर",
+  "inwardOutwardOps": "आवक/जावक संचालन",
+  "technicians": "तकनीशियन",
+  "tempMonitoring": "तापमान निगरानी",
+  "noRoleAddedYet": "अभी तक कोई {role} नहीं जोड़ा",
+  "@noRoleAddedYet": {
+    "placeholders": {
+      "role": {
+        "type": "String"
+      }
+    }
+  },
+  "disabled": "अक्षम",
+  "enable": "सक्षम करें",
+  "disable": "अक्षम करें",
+  "deleteStaff": "कर्मचारी हटाएं?",
+  "deleteStaffConfirm": "क्या आप वाकई {name} को हटाना चाहते हैं? यह कार्रवाई पूर्ववत नहीं की जा सकती।",
+  "@deleteStaffConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "staffDeletedSuccess": "कर्मचारी सफलतापूर्वक हटाया गया",
+  "errorLoadingStaff": "कर्मचारी लोड करने में त्रुटि",
+  "errorLoadingStorages": "स्टोरेज लोड करने में त्रुटि",
+
+  "manageYourFacilities": "अपनी सुविधाएं प्रबंधित करें",
+  "addNewStorage": "नया स्टोरेज जोड़ें",
+  "addStorage": "स्टोरेज जोड़ें",
+  "editStorage": "स्टोरेज संपादित करें",
+  "storageType": "स्टोरेज प्रकार",
+  "silos": "साइलो",
+  "warehouses": "गोदाम",
+  "frozenStorages": "फ्रोजन स्टोरेज",
+  "ripeningChambers": "पकाने के कमरे",
+  "controlledAtmosphere": "नियंत्रित वातावरण स्टोरेज",
+  "storageNameHint": "जैसे स्टोरेज मुख्य",
+  "codeRequired": "कोड *",
+  "codeHint": "जैसे STR1",
+  "city": "शहर",
+  "cityHint": "जैसे नासिक",
+  "totalCapacityMT": "कुल क्षमता (MT)",
+  "roomsRequired": "कमरे *",
+  "addAtLeastOneRoom": "इस स्टोरेज के लिए कम से कम एक कमरा जोड़ें",
+  "roomsHint": "जैसे कमरा A, कमरा B, कमरा C (कॉमा से अलग)",
+  "separateWithCommas": "कई कमरों को कॉमा से अलग करें",
+  "nameCodeRequired": "नाम और कोड आवश्यक हैं",
+  "storageDeleted": "स्टोरेज हटाया गया",
+  "atLeastOneRoomRequired": "कम से कम एक कमरा आवश्यक है",
+  "storageCreatedSuccess": "स्टोरेज सफलतापूर्वक बनाया गया",
+  "storageUpdatedSuccess": "स्टोरेज सफलतापूर्वक अपडेट किया गया",
+  "create": "बनाएं",
+  "yourStoragesCount": "आपके स्टोरेज ({count})",
+  "@yourStoragesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noStoragesYet": "अभी कोई स्टोरेज नहीं",
+  "addFirstStorage": "अपनी पहली स्टोरेज सुविधा जोड़ें",
+  "capacityUsage": "क्षमता उपयोग",
+  "mtUsed": "{value} MT उपयोग",
+  "@mtUsed": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "managerLabel": "प्रबंधक:",
+  "change": "बदलें",
+  "assign": "आवंटित करें",
+  "view": "देखें",
+  "assignManager": "प्रबंधक आवंटित करें",
+  "coldStorageLabel": "कोल्ड स्टोरेज: {name}",
+  "@coldStorageLabel": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "selectManager": "प्रबंधक चुनें:",
+  "noManager": "कोई प्रबंधक नहीं",
+  "managerAssignedSuccess": "प्रबंधक सफलतापूर्वक आवंटित किया गया",
+  "code": "कोड",
+  "occupied": "भरा हुआ",
+  "errorLoadingColdStorages": "कोल्ड स्टोरेज लोड करने में त्रुटि",
+
+  "temperatureAlertsSummary": "तापमान अलर्ट",
+  "allRoomsOperational": "सभी कमरे चालू",
+  "roomsNeedAttention": "कमरों को ध्यान देने की जरूरत है",
+
+  "managerDashboard": "प्रबंधक डैशबोर्ड",
+  "welcome": "स्वागत है, {name}",
+  "@welcome": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "storageLabel": "स्टोरेज: {names}",
+  "@storageLabel": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "noStorageAssignedTitle": "कोई स्टोरेज आवंटित नहीं",
+  "contactOwnerMessage": "कृपया स्टोरेज आवंटित करने के लिए मालिक से संपर्क करें।",
+  "mt": "MT",
+  "activeEntriesCount": "{count} सक्रिय प्रविष्टियाँ",
+  "@activeEntriesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "inventorySummary": "इन्वेंटरी सारांश",
+  "viewStoredCrops": "संग्रहीत फसलें देखें",
+  "alertsActiveCount": "{count} अलर्ट सक्रिय",
+  "@alertsActiveCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "teamMembersCount": "{count} टीम सदस्य",
+  "@teamMembersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pendingRequests": "लंबित अनुरोध",
+  "awaitingApproval": "अनुमोदन की प्रतीक्षा में",
+  "totalStock": "कुल स्टॉक",
+  "acrossCropTypes": "{count} फसल प्रकारों में",
+  "@acrossCropTypes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "addInward": "इनवर्ड जोड़ें",
+  "markOutward": "आउटवर्ड मार्क करें",
+  "unknown": "अज्ञात",
+  "inStorage": "स्टोरेज में",
+  "inwardDate": "इनवर्ड तिथि",
+  "expectedOut": "अपेक्षित आउट",
+  "addAndManageStaff": "स्टोरेज स्टाफ जोड़ें और प्रबंधित करें",
+  "deleteStaffMember": "स्टाफ सदस्य हटाएं",
+  "deleteStaffMemberConfirm": "क्या आप वाकई इस स्टाफ सदस्य को हटाना चाहते हैं?",
+  "errorMessage": "त्रुटि: {error}",
+  "@errorMessage": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "staffMemberAddedSuccess": "स्टाफ सदस्य सफलतापूर्वक जोड़ा गया",
+  "editStaff": "स्टाफ सदस्य संपादित करें",
+  "staffMemberUpdatedSuccess": "स्टाफ सदस्य सफलतापूर्वक अपडेट किया गया",
+  "staffMembersCount": "स्टाफ सदस्य ({count})",
+  "@staffMembersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noRole": "कोई भूमिका नहीं",
+  "activeAlertsCount": "{count} सक्रिय अलर्ट",
+  "@activeAlertsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "activeAlerts": "सक्रिय अलर्ट",
+  "allClear": "सब ठीक है!",
+  "noActiveAlerts": "कोई सक्रिय तापमान अलर्ट नहीं",
+  "normalStatus": "सामान्य स्थिति",
+  "unknownRoom": "अज्ञात कमरा",
+  "currentTemp": "वर्तमान तापमान",
+  "allowedRange": "अनुमत रेंज",
+  "tempRange": "{min}°C से {max}°C",
+  "@tempRange": {
+    "placeholders": {
+      "min": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "takeAction": "कार्रवाई करें",
+  "actionTaken": "कार्रवाई - {roomName}",
+  "@actionTaken": {
+    "placeholders": {
+      "roomName": {
+        "type": "String"
+      }
+    }
+  },
+  "acknowledge": "स्वीकार करें",
+  "markAsSeen": "देखा गया मार्क करें",
+  "resolve": "समाधान करें",
+  "issueFixed": "समस्या ठीक हो गई है",
+  "alertActionSuccess": "अलर्ट {action} सफलतापूर्वक",
+  "@alertActionSuccess": {
+    "placeholders": {
+      "action": {
+        "type": "String"
+      }
+    }
+  },
+  "withinRange": "रेंज के भीतर",
+  "errorLoadingAlerts": "अलर्ट लोड करने में त्रुटि: {error}",
+  "@errorLoadingAlerts": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "roomTemperatureSettings": "कमरे की तापमान सेटिंग्स",
+  "roomsCount": "{count} कमरे",
+  "@roomsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noRoomsFound": "कोई कमरा नहीं मिला",
+  "addNewRoom": "नया कमरा जोड़ें",
+  "coldStorageRequired": "कोल्ड स्टोरेज *",
+  "roomNameRequired": "कमरे का नाम *",
+  "roomNameHint": "जैसे कमरा A",
+  "capacityMT": "क्षमता (MT)",
+  "capacityPlaceholder": "100",
+  "minTemperature": "न्यूनतम तापमान (°C)",
+  "minTempPlaceholder": "-5",
+  "maxTemperature": "अधिकतम तापमान (°C)",
+  "maxTempPlaceholder": "0",
+  "roomNameStorageRequired": "कमरे का नाम और स्टोरेज आवश्यक है",
+  "roomAddedSuccess": "कमरा सफलतापूर्वक जोड़ा गया",
+  "setTemperatureRange": "तापमान रेंज सेट करें",
+  "minimumTemperature": "न्यूनतम तापमान (°C)",
+  "minTempExample": "जैसे, -5",
+  "maximumTemperature": "अधिकतम तापमान (°C)",
+  "maxTempExample": "जैसे, 0",
+  "temperatureAlertInfo": "जब तापमान इस रेंज से बाहर जाता है तो अलर्ट बनाया जाएगा",
+  "minLessThanMax": "न्यूनतम अधिकतम से कम होना चाहिए",
+  "temperatureRangeUpdated": "तापमान रेंज सफलतापूर्वक अपडेट की गई",
+  "editTemperatureRange": "तापमान रेंज संपादित करें",
+  "noStoragesAssigned": "आपको कोई स्टोरेज आवंटित नहीं किया गया",
+  "bookingRequests": "बुकिंग अनुरोध",
+  "manageStorageRequests": "स्टोरेज अनुरोध प्रबंधित करें",
+  "underDevelopment": "विकास में",
+  "featureComingSoon": "यह सुविधा जल्द ही आ रही है!\\nबुकिंग अनुरोध और अनुमोदन यहां उपलब्ध होंगे।",
+  "versionFeature": "संस्करण 2.0 सुविधा",
+
+  "errorLoadingRooms": "कमरे लोड करने में त्रुटि: {error}",
+  "@errorLoadingRooms": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "pleaseSelectRoom": "कृपया एक कमरा चुनें",
+  "pleaseEnterTemperature": "कृपया तापमान दर्ज करें",
+  "tempLoggedSuccess": "✓ तापमान सफलतापूर्वक लॉग किया गया - रेंज के भीतर",
+  "tempLoggedWarning": "⚠ तापमान लॉग किया गया - चेतावनी: रेंज से बाहर",
+  "tempLoggedCritical": "⚠ तापमान लॉग किया गया - गंभीर: अलर्ट बनाया गया",
+  "errorLoggingTemp": "तापमान लॉग करने में त्रुटि: {error}",
+  "@errorLoggingTemp": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "noStorageRoomsAssigned": "कोई स्टोरेज कमरा आवंटित नहीं",
+  "contactManager": "कृपया अपने प्रबंधक से संपर्क करें",
+  "selectRoomInstruction": "एक कमरा चुनें और वर्तमान तापमान रीडिंग दर्ज करें",
+  "selectStorageRoomRequired": "स्टोरेज कमरा चुनें *",
+  "chooseRoom": "एक कमरा चुनें",
+  "temperatureCelsius": "तापमान (°C) *",
+  "enterTempHint": "तापमान दर्ज करें (जैसे, -2.5)",
+  "celsiusUnit": "°C",
+  "logTemperature": "तापमान लॉग करें",
+  "assignedRooms": "आवंटित कमरे"
+}

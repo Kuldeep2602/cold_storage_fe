@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../state/app_state.dart';
 
 class TemperatureMonitoringScreen extends StatefulWidget {
   const TemperatureMonitoringScreen({super.key});
 
   @override
-  State<TemperatureMonitoringScreen> createState() => _TemperatureMonitoringScreenState();
+  State<TemperatureMonitoringScreen> createState() =>
+      _TemperatureMonitoringScreenState();
 }
 
-class _TemperatureMonitoringScreenState extends State<TemperatureMonitoringScreen> {
+class _TemperatureMonitoringScreenState
+    extends State<TemperatureMonitoringScreen> {
   bool _isLoading = true;
   List<Map<String, dynamic>> _rooms = [];
   final _temperatureController = TextEditingController();
@@ -27,7 +30,7 @@ class _TemperatureMonitoringScreenState extends State<TemperatureMonitoringScree
     try {
       final appState = context.read<AppState>();
       final user = appState.user;
-      
+
       if (user != null && user.assignedStorages.isNotEmpty) {
         // Get rooms from assigned storages
         final rooms = <Map<String, dynamic>>[];
@@ -43,7 +46,7 @@ class _TemperatureMonitoringScreenState extends State<TemperatureMonitoringScree
             });
           }
         }
-        
+
         if (mounted) {
           setState(() {
             _rooms = rooms;
@@ -61,24 +64,26 @@ class _TemperatureMonitoringScreenState extends State<TemperatureMonitoringScree
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading rooms: $e')),
+          SnackBar(content: Text(l10n.errorLoadingRooms(e.toString()))),
         );
       }
     }
   }
 
   Future<void> _logTemperature() async {
+    final l10n = AppLocalizations.of(context)!;
     if (_selectedRoomId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a room')),
+        SnackBar(content: Text(l10n.pleaseSelectRoom)),
       );
       return;
     }
 
     if (_temperatureController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter temperature')),
+        SnackBar(content: Text(l10n.pleaseEnterTemperature)),
       );
       return;
     }
@@ -86,7 +91,7 @@ class _TemperatureMonitoringScreenState extends State<TemperatureMonitoringScree
     try {
       final temperature = double.parse(_temperatureController.text);
       final appState = context.read<AppState>();
-      
+
       final response = await appState.client.postJson(
         '/api/temperature/logs/log-temperature/',
         {
@@ -98,19 +103,19 @@ class _TemperatureMonitoringScreenState extends State<TemperatureMonitoringScree
       if (mounted) {
         final status = response['status'] as String?;
         final alertCreated = response['alert_created'] as bool? ?? false;
-        
+
         Color snackBarColor;
         String message;
-        
+
         if (status == 'normal') {
           snackBarColor = const Color(0xFF4CAF50);
-          message = '✓ Temperature logged successfully - Within range';
+          message = l10n.tempLoggedSuccess;
         } else if (status == 'warning') {
           snackBarColor = const Color(0xFFFF9800);
-          message = '⚠ Temperature logged - Warning: Out of range';
+          message = l10n.tempLoggedWarning;
         } else {
           snackBarColor = const Color(0xFFF44336);
-          message = '⚠ Temperature logged - CRITICAL: Alert created';
+          message = l10n.tempLoggedCritical;
         }
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -124,14 +129,14 @@ class _TemperatureMonitoringScreenState extends State<TemperatureMonitoringScree
         // Clear form
         _temperatureController.clear();
         setState(() => _selectedRoomId = null);
-        
+
         // Reload rooms to get updated temperatures
         _loadRooms();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error logging temperature: $e')),
+          SnackBar(content: Text(l10n.errorLoggingTemp(e.toString()))),
         );
       }
     }
@@ -145,10 +150,11 @@ class _TemperatureMonitoringScreenState extends State<TemperatureMonitoringScree
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text('Temperature Monitoring'),
+        title: Text(l10n.temperatureMonitoring),
         backgroundColor: const Color(0xFF00897B),
         foregroundColor: Colors.white,
         actions: [
@@ -161,14 +167,15 @@ class _TemperatureMonitoringScreenState extends State<TemperatureMonitoringScree
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: const Color(0xFF00897B),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
               ),
-              child: const Text(
-                'Logout',
-                style: TextStyle(fontWeight: FontWeight.w600),
+              child: Text(
+                l10n.logout,
+                style: const TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
           ),
@@ -181,11 +188,11 @@ class _TemperatureMonitoringScreenState extends State<TemperatureMonitoringScree
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.store_mall_directory_outlined, 
-                           size: 80, color: Colors.grey[400]),
+                      Icon(Icons.store_mall_directory_outlined,
+                          size: 80, color: Colors.grey[400]),
                       const SizedBox(height: 16),
                       Text(
-                        'No storage rooms assigned',
+                        l10n.noStorageRoomsAssigned,
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -194,7 +201,7 @@ class _TemperatureMonitoringScreenState extends State<TemperatureMonitoringScree
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Please contact your manager',
+                        l10n.contactManager,
                         style: TextStyle(color: Colors.grey[600]),
                       ),
                     ],
@@ -214,13 +221,14 @@ class _TemperatureMonitoringScreenState extends State<TemperatureMonitoringScree
                           border: Border.all(color: const Color(0xFF00897B)),
                         ),
                         child: Row(
-                          children: const [
-                            Icon(Icons.info_outline, color: Color(0xFF00897B)),
-                            SizedBox(width: 12),
+                          children: [
+                            const Icon(Icons.info_outline,
+                                color: Color(0xFF00897B)),
+                            const SizedBox(width: 12),
                             Expanded(
                               child: Text(
-                                'Select a room and enter the current temperature reading',
-                                style: TextStyle(
+                                l10n.selectRoomInstruction,
+                                style: const TextStyle(
                                   fontSize: 14,
                                   color: Color(0xFF00695C),
                                 ),
@@ -233,9 +241,9 @@ class _TemperatureMonitoringScreenState extends State<TemperatureMonitoringScree
                       const SizedBox(height: 24),
 
                       // Room Selection
-                      const Text(
-                        'Select Storage Room *',
-                        style: TextStyle(
+                      Text(
+                        l10n.selectStorageRoomRequired,
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
@@ -244,7 +252,7 @@ class _TemperatureMonitoringScreenState extends State<TemperatureMonitoringScree
                       DropdownButtonFormField<int>(
                         value: _selectedRoomId,
                         decoration: InputDecoration(
-                          hintText: 'Choose a room',
+                          hintText: l10n.chooseRoom,
                           prefixIcon: const Icon(Icons.meeting_room),
                           filled: true,
                           fillColor: Colors.white,
@@ -269,9 +277,9 @@ class _TemperatureMonitoringScreenState extends State<TemperatureMonitoringScree
                       const SizedBox(height: 24),
 
                       // Temperature Input
-                      const Text(
-                        'Temperature (°C) *',
-                        style: TextStyle(
+                      Text(
+                        l10n.temperatureCelsius,
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
@@ -279,11 +287,12 @@ class _TemperatureMonitoringScreenState extends State<TemperatureMonitoringScree
                       const SizedBox(height: 8),
                       TextField(
                         controller: _temperatureController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true, signed: true),
                         decoration: InputDecoration(
-                          hintText: 'Enter temperature (e.g., -2.5)',
+                          hintText: l10n.enterTempHint,
                           prefixIcon: const Icon(Icons.thermostat),
-                          suffixText: '°C',
+                          suffixText: l10n.celsiusUnit,
                           filled: true,
                           fillColor: Colors.white,
                           border: OutlineInputBorder(
@@ -305,9 +314,9 @@ class _TemperatureMonitoringScreenState extends State<TemperatureMonitoringScree
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Text(
-                          'Log Temperature',
-                          style: TextStyle(
+                        child: Text(
+                          l10n.logTemperature,
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
@@ -317,9 +326,9 @@ class _TemperatureMonitoringScreenState extends State<TemperatureMonitoringScree
                       const SizedBox(height: 32),
 
                       // Rooms List
-                      const Text(
-                        'Assigned Rooms',
-                        style: TextStyle(
+                      Text(
+                        l10n.assignedRooms,
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
@@ -357,7 +366,8 @@ class _TemperatureMonitoringScreenState extends State<TemperatureMonitoringScree
               color: const Color(0xFFE0F2F1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.meeting_room, color: Color(0xFF00897B), size: 24),
+            child: const Icon(Icons.meeting_room,
+                color: Color(0xFF00897B), size: 24),
           ),
           const SizedBox(width: 14),
           Expanded(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../state/app_state.dart';
 import '../operator/inward_entry_screen.dart';
 import '../operator/outward_entry_screen.dart';
@@ -29,14 +30,16 @@ class _ManagerInventoryTabState extends State<ManagerInventoryTab> {
     try {
       final appState = context.read<AppState>();
       final data = await appState.inventory.fetchStock();
-      
+
       if (mounted && data != null) {
         final items = (data as List).cast<Map<String, dynamic>>();
         double total = 0;
         for (var item in items) {
-          total += double.tryParse(item['remaining_quantity']?.toString() ?? '0') ?? 0;
+          total +=
+              double.tryParse(item['remaining_quantity']?.toString() ?? '0') ??
+                  0;
         }
-        
+
         setState(() {
           _inventoryItems = items;
           _totalStock = total;
@@ -110,6 +113,7 @@ class _ManagerInventoryTabState extends State<ManagerInventoryTab> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
@@ -131,15 +135,16 @@ class _ManagerInventoryTabState extends State<ManagerInventoryTab> {
                       color: Colors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.inventory_2, color: Colors.white, size: 24),
+                    child: const Icon(Icons.inventory_2,
+                        color: Colors.white, size: 24),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Inventory Summary',
+                          l10n.inventorySummary,
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -147,7 +152,7 @@ class _ManagerInventoryTabState extends State<ManagerInventoryTab> {
                           ),
                         ),
                         Text(
-                          'Current stock overview',
+                          l10n.viewStoredCrops,
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.white70,
@@ -163,12 +168,14 @@ class _ManagerInventoryTabState extends State<ManagerInventoryTab> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
                       foregroundColor: const Color(0xFF1976D2),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
-                    child: const Text('Logout', style: TextStyle(fontWeight: FontWeight.w600)),
+                    child: Text(l10n.logout,
+                        style: TextStyle(fontWeight: FontWeight.w600)),
                   ),
                 ],
               ),
@@ -196,7 +203,8 @@ class _ManagerInventoryTabState extends State<ManagerInventoryTab> {
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFF1976D2).withOpacity(0.3),
+                                  color:
+                                      const Color(0xFF1976D2).withOpacity(0.3),
                                   blurRadius: 12,
                                   offset: const Offset(0, 6),
                                 ),
@@ -205,8 +213,8 @@ class _ManagerInventoryTabState extends State<ManagerInventoryTab> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  'Total Stock',
+                                Text(
+                                  l10n.totalStock,
                                   style: TextStyle(
                                     fontSize: 16,
                                     color: Colors.white70,
@@ -214,7 +222,7 @@ class _ManagerInventoryTabState extends State<ManagerInventoryTab> {
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  '${_totalStock.toStringAsFixed(0)} MT',
+                                  '${_totalStock.toStringAsFixed(0)} ${l10n.mt}',
                                   style: const TextStyle(
                                     fontSize: 36,
                                     fontWeight: FontWeight.bold,
@@ -223,7 +231,7 @@ class _ManagerInventoryTabState extends State<ManagerInventoryTab> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Across $_cropCount crop types',
+                                  l10n.acrossCropTypes(_cropCount),
                                   style: const TextStyle(
                                     fontSize: 14,
                                     color: Colors.white70,
@@ -241,12 +249,14 @@ class _ManagerInventoryTabState extends State<ManagerInventoryTab> {
                               Expanded(
                                 child: ElevatedButton.icon(
                                   onPressed: _navigateToInwardEntry,
-                                  icon: const Icon(Icons.add_circle_outline, size: 20),
-                                  label: const Text('Add Inward'),
+                                  icon: const Icon(Icons.add_circle_outline,
+                                      size: 20),
+                                  label: Text(l10n.addInward),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF4CAF50),
                                     foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 14),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
@@ -257,12 +267,14 @@ class _ManagerInventoryTabState extends State<ManagerInventoryTab> {
                               Expanded(
                                 child: ElevatedButton.icon(
                                   onPressed: _navigateToOutwardEntry,
-                                  icon: const Icon(Icons.remove_circle_outline, size: 20),
-                                  label: const Text('Mark Outward'),
+                                  icon: const Icon(Icons.remove_circle_outline,
+                                      size: 20),
+                                  label: Text(l10n.markOutward),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFFFF9800),
                                     foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 14),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
@@ -275,7 +287,8 @@ class _ManagerInventoryTabState extends State<ManagerInventoryTab> {
                           const SizedBox(height: 24),
 
                           // Inventory Items
-                          ..._inventoryItems.map((item) => _buildInventoryItem(item)),
+                          ..._inventoryItems
+                              .map((item) => _buildInventoryItem(item)),
                         ],
                       ),
                     ),
@@ -287,10 +300,14 @@ class _ManagerInventoryTabState extends State<ManagerInventoryTab> {
   }
 
   Widget _buildInventoryItem(Map<String, dynamic> item) {
-    final cropName = item['crop_name'] ?? 'Unknown';
-    final quantity = double.tryParse(item['remaining_quantity']?.toString() ?? '0') ?? 0;
+    final l10n = AppLocalizations.of(context)!;
+    final cropName = item['crop_name'] ?? l10n.unknown;
+    final quantity =
+        double.tryParse(item['remaining_quantity']?.toString() ?? '0') ?? 0;
     final entryDate = item['entry_date'] ?? '';
-    final expectedOut = item['expected_out'] ?? item['expected_storage_duration_days']?.toString() ?? '';
+    final expectedOut = item['expected_out'] ??
+        item['expected_storage_duration_days']?.toString() ??
+        '';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -318,7 +335,8 @@ class _ManagerInventoryTabState extends State<ManagerInventoryTab> {
                   color: const Color(0xFFE8F5E9),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.inventory_2, color: Color(0xFF4CAF50), size: 24),
+                child: const Icon(Icons.inventory_2,
+                    color: Color(0xFF4CAF50), size: 24),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -335,7 +353,7 @@ class _ManagerInventoryTabState extends State<ManagerInventoryTab> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'In storage',
+                      l10n.inStorage,
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.green[600],
@@ -356,7 +374,7 @@ class _ManagerInventoryTabState extends State<ManagerInventoryTab> {
                     ),
                   ),
                   Text(
-                    'MT',
+                    l10n.mt,
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey[600],
@@ -370,11 +388,13 @@ class _ManagerInventoryTabState extends State<ManagerInventoryTab> {
           Row(
             children: [
               Expanded(
-                child: _buildDateInfo(Icons.login, 'Inward Date', _formatDate(entryDate)),
+                child: _buildDateInfo(
+                    Icons.login, l10n.inwardDate, _formatDate(entryDate)),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildDateInfo(Icons.logout, 'Expected Out', _formatDate(expectedOut)),
+                child: _buildDateInfo(
+                    Icons.logout, l10n.expectedOut, _formatDate(expectedOut)),
               ),
             ],
           ),

@@ -12,20 +12,28 @@ class AuthService {
     });
   }
 
-  Future<Map<String, dynamic>> requestOtp(String phoneNumber) {
-    return _api.postJson('/api/auth/request-otp/', {
-      'phone_number': phoneNumber,
-    });
+  Future<Map<String, dynamic>> requestOtp(String phoneNumber, {String? role}) {
+    final body = {'phone_number': phoneNumber};
+    if (role != null && role.isNotEmpty) {
+      body['role'] = role;
+    }
+    return _api.postJson('/api/auth/request-otp/', body);
   }
 
   Future<Map<String, dynamic>> verifyOtp({
     required String phoneNumber,
     required String code,
+    String? role,
   }) async {
-    final res = await _api.postJson('/api/auth/verify-otp/', {
+    final body = {
       'phone_number': phoneNumber,
       'code': code,
-    });
+    };
+    if (role != null && role.isNotEmpty) {
+      body['role'] = role;
+    }
+
+    final res = await _api.postJson('/api/auth/verify-otp/', body);
 
     final access = res['access'] as String?;
     if (access != null && access.isNotEmpty) {

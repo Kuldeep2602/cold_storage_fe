@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_localizations.dart';
 import '../state/app_state.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
@@ -14,48 +15,54 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
   String _selectedRole = 'operator';
   bool _isProcessing = false;
 
-  final List<Map<String, String>> _roles = [
-    {
-      'code': 'operator',
-      'name': 'Operator',
-      'description': 'Handles day-to-day operations',
-    },
-    {
-      'code': 'technician',
-      'name': 'Technician',
-      'description': 'Manages technical aspects',
-    },
-    {
-      'code': 'manager',
-      'name': 'Manager',
-      'description': 'Oversees team and operations',
-    },
-    {
-      'code': 'owner',
-      'name': 'Owner',
-      'description': 'Full access and control',
-    },
-  ];
+  List<Map<String, String>> _getRoles(AppLocalizations? l10n) {
+    return [
+      {
+        'code': 'operator',
+        'name': l10n?.operator ?? 'Operator',
+        'description': l10n?.operatorDescription ?? 'Handles day-to-day operations',
+      },
+      {
+        'code': 'technician',
+        'name': l10n?.technician ?? 'Technician',
+        'description': l10n?.technicianDescription ?? 'Manages technical aspects',
+      },
+      {
+        'code': 'manager',
+        'name': l10n?.manager ?? 'Manager',
+        'description': l10n?.managerDescription ?? 'Oversees team and operations',
+      },
+      {
+        'code': 'owner',
+        'name': l10n?.owner ?? 'Owner',
+        'description': l10n?.ownerDescription ?? 'Full access and control',
+      },
+    ];
+  }
 
   Future<void> _onContinue() async {
     setState(() => _isProcessing = true);
+    final l10n = AppLocalizations.of(context);
 
     try {
       final appState = context.read<AppState>();
       await appState.setSelectedRole(_selectedRole);
-      
+
       // Navigation handled automatically by main.dart
     } catch (e) {
       if (!mounted) return;
       setState(() => _isProcessing = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text('${l10n?.error ?? "Error"}: $e')),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final roles = _getRoles(l10n);
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -63,15 +70,15 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: ConstrainedBox(
             constraints: BoxConstraints(
-              minHeight: MediaQuery.of(context).size.height - 
-                         MediaQuery.of(context).padding.top - 
+              minHeight: MediaQuery.of(context).size.height -
+                         MediaQuery.of(context).padding.top -
                          MediaQuery.of(context).padding.bottom,
             ),
             child: IntrinsicHeight(
               child: Column(
                 children: [
                   const SizedBox(height: 16),
-                  
+
                   // Back Button to change language
                   Align(
                     alignment: Alignment.centerLeft,
@@ -86,7 +93,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                   ),
 
                   const SizedBox(height: 32),
-                  
+
                   // Logo
                   Container(
                     width: 96,
@@ -106,36 +113,36 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // App Title
-                  const Text(
-                    'ColdOne',
-                    style: TextStyle(
+                  Text(
+                    l10n?.appTitle ?? 'ColdOne',
+                    style: const TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF1E88E5),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 48),
-                  
+
                   // Subtitle
-                  const Text(
-                    'Select role',
-                    style: TextStyle(
+                  Text(
+                    l10n?.selectRole ?? 'Select role',
+                    style: const TextStyle(
                       fontSize: 16,
                       color: Color(0xFF666666),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Role Options
                   Expanded(
                     child: Column(
-                      children: _roles.map((role) {
+                      children: roles.map((role) {
                         final isSelected = _selectedRole == role['code'];
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 12.0),
@@ -204,9 +211,9 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                       }).toList(),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Continue Button
                   SizedBox(
                     width: double.infinity,
@@ -230,16 +237,16 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                                 strokeWidth: 2,
                               ),
                             )
-                          : const Text(
-                              'Continue',
-                              style: TextStyle(
+                          : Text(
+                              l10n?.continueText ?? 'Continue',
+                              style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 32),
                 ],
               ),

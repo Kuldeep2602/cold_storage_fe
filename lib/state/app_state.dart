@@ -50,10 +50,13 @@ class AppState extends ChangeNotifier {
   ApiClient get client => _api;
 
   // Role and Language Getters
-  bool get hasSelectedLanguage => _selectedLanguage != null && _selectedLanguage!.isNotEmpty;
-  bool get hasSelectedRole => _selectedRole != null && _selectedRole!.isNotEmpty;
+  bool get hasSelectedLanguage =>
+      _selectedLanguage != null && _selectedLanguage!.isNotEmpty;
+  bool get hasSelectedRole =>
+      _selectedRole != null && _selectedRole!.isNotEmpty;
   bool get hasRole => _user?.role != null && _user!.role!.isNotEmpty;
   String? get selectedRole => _selectedRole;
+  String? get selectedLanguage => _selectedLanguage;
 
   bool get isManagerOrAdmin {
     final role = _user?.role ?? '';
@@ -84,8 +87,21 @@ class AppState extends ChangeNotifier {
   }
 
   void _rebuildApi() {
-    _api = ApiClient(baseUrl: _baseUrl);
+    _api = ApiClient(
+      baseUrl: _baseUrl,
+      onUnauthorized: () {
+        // Handle 401 errors by logging out
+        debugPrint('ApiClient: Unauthorized - logging out');
+        logout();
+      },
+    );
     _api.accessToken = _accessToken;
+
+    // Debug: Log token status
+    if (kDebugMode) {
+      debugPrint(
+          'ApiClient initialized: baseUrl=$_baseUrl, hasToken=${(_accessToken ?? "").isNotEmpty}');
+    }
 
     auth = AuthService(_api);
     inventory = InventoryService(_api);
@@ -139,35 +155,45 @@ class AppState extends ChangeNotifier {
   }
 
   Future<Map<String, dynamic>> requestOtp(String phoneNumber) {
-    return auth.requestOtp(phoneNumber);
+    // Pass the selected role to help disambiguate users with same phone number
+    return auth.requestOtp(phoneNumber, role: _selectedRole);
   }
 
-  Future<void> verifyOtp({required String phoneNumber, required String code}) async {
-    final res = await auth.verifyOtp(phoneNumber: phoneNumber, code: code);
+  Future<void> verifyOtp(
+      {required String phoneNumber, required String code}) async {
+    // Pass the selected role to help disambiguate users with same phone number
+    final res = await auth.verifyOtp(
+      phoneNumber: phoneNumber,
+      code: code,
+      role: _selectedRole,
+    );
 
     // Parse user data first to check role
     final userMap = (res['user'] as Map?)?.cast<String, dynamic>();
     final authenticatedUser = userMap == null ? null : User.fromJson(userMap);
-    
+
     // Strict Role Check: Ensure the logged-in user's role matches the selected role
     // Exception: Owners often have 'admin' role in backend, or 'owner'.
     if (authenticatedUser != null && _selectedRole != null) {
       final userRole = (authenticatedUser.role ?? '').toLowerCase();
       final selectedRole = _selectedRole!.toLowerCase();
-      
+
       // Allow if roles match exactly
       bool isMismatch = userRole != selectedRole;
-      
+
       // Special case: 'admin' user can login as 'owner'
       if (selectedRole == 'owner' && userRole == 'admin') {
         isMismatch = false;
       }
-      
+
       if (isMismatch) {
         // If roles mismatch, do not log in. Throw error.
         throw ApiException(
           403,
-          {'detail': 'Role mismatch. You cannot login to this role with your account.'},
+          {
+            'detail':
+                'Role mismatch. You cannot login to this role with your account.'
+          },
         );
       }
     }
@@ -196,9 +222,9 @@ class AppState extends ChangeNotifier {
     await _prefs.remove('accessToken');
     await _prefs.remove('refreshToken');
     await _prefs.remove('userJson');
-    
+
     // Optionally clear role selection if you want them to re-select role on next login
-    // await clearSelectedRole(); 
+    // await clearSelectedRole();
 
     notifyListeners();
   }

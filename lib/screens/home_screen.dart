@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_localizations.dart';
+import '../state/app_state.dart';
 import 'inventory/inventory_screen.dart';
 import 'ledger/ledger_screen.dart';
 import 'manager/manager_dashboard_screen.dart';
@@ -10,7 +12,6 @@ import 'payments/payments_screen.dart';
 import 'profile/profile_screen.dart';
 import 'technician/technician_menu_screen.dart';
 import 'temperature/temperature_screen.dart';
-import '../state/app_state.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,30 +26,31 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
-    
+    final l10n = AppLocalizations.of(context);
+
     // Route based on user role
     final userRole = appState.user?.role;
-    
+
     // Operators get operator menu
     if (userRole == 'operator') {
       return const OperatorMenuScreen();
     }
-    
+
     // Technicians get technician menu
     if (userRole == 'technician') {
       return const TechnicianMenuScreen();
     }
-    
+
     // Managers get manager dashboard
     if (userRole == 'manager') {
       return const ManagerDashboardScreen();
     }
-    
+
     // Owners and Admins get owner dashboard (multi-cold-storage management)
     if (userRole == 'owner' || userRole == 'admin') {
       return const OwnerDashboardScreen();
     }
-    
+
     // Fallback for users without specific roles - show basic navigation
     final screens = <Widget>[
       const InventoryScreen(),
@@ -64,12 +66,12 @@ class _HomeScreenState extends State<HomeScreen> {
         currentIndex: _index,
         onTap: (i) => setState(() => _index = i),
         type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.inventory_2), label: 'Inventory'),
-          BottomNavigationBarItem(icon: Icon(Icons.thermostat), label: 'Temp'),
-          BottomNavigationBarItem(icon: Icon(Icons.receipt_long), label: 'Ledger'),
-          BottomNavigationBarItem(icon: Icon(Icons.payments), label: 'Payments'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        items: [
+          BottomNavigationBarItem(icon: const Icon(Icons.inventory_2), label: l10n?.inventory ?? 'Inventory'),
+          BottomNavigationBarItem(icon: const Icon(Icons.thermostat), label: l10n?.temp ?? 'Temp'),
+          BottomNavigationBarItem(icon: const Icon(Icons.receipt_long), label: l10n?.ledger ?? 'Ledger'),
+          BottomNavigationBarItem(icon: const Icon(Icons.payments), label: l10n?.payments ?? 'Payments'),
+          BottomNavigationBarItem(icon: const Icon(Icons.person), label: l10n?.profile ?? 'Profile'),
         ],
       ),
     );

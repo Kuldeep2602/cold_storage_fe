@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_localizations.dart';
 import '../services/api_client.dart';
 import '../state/app_state.dart';
 import 'otp_verification_screen.dart';
@@ -19,14 +20,15 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
   Future<void> _sendOTP() async {
     if (_isLoading) return;
     final phone = _phoneController.text.trim();
-    
+    final l10n = AppLocalizations.of(context);
+
     if (phone.isEmpty) {
-      _showError('Please enter your phone number');
+      _showError(l10n?.pleaseEnterPhone ?? 'Please enter your phone number');
       return;
     }
 
     if (phone.length < 10) {
-      _showError('Please enter a valid phone number');
+      _showError(l10n?.pleaseEnterValidPhone ?? 'Please enter a valid phone number');
       return;
     }
 
@@ -34,14 +36,14 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
 
     try {
       final appState = context.read<AppState>();
-      
+
       // Try login (request-otp) first - most users (Staff) are already registered
       try {
         final res = await appState.requestOtp(phone);
         final otpCode = res['otp_code'] as String?;
-        
+
         if (!mounted) return;
-        
+
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -56,19 +58,19 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
         if (e.statusCode == 404 || e.toString().contains('User not found')) {
           final selectedRole = appState.selectedRole;
           const restrictedRoles = ['manager', 'operator', 'technician'];
-          
+
           // If staff role, DO NOT allow signup - show Unauthorized
           if (restrictedRoles.contains(selectedRole)) {
-             _showError('Unauthorized: Please contact your administrator to register.');
+             _showError(l10n?.unauthorizedContact ?? 'Unauthorized: Please contact your administrator to register.');
              return;
           }
 
           // Allow signup for Owners (or if no role selected yet)
           final res = await appState.signup(phone);
           final otpCode = res['otp_code'] as String?;
-          
+
           if (!mounted) return;
-          
+
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -104,6 +106,8 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       resizeToAvoidBottomInset: true,
@@ -112,15 +116,15 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: ConstrainedBox(
             constraints: BoxConstraints(
-              minHeight: MediaQuery.of(context).size.height - 
-                         MediaQuery.of(context).padding.top - 
+              minHeight: MediaQuery.of(context).size.height -
+                         MediaQuery.of(context).padding.top -
                          MediaQuery.of(context).padding.bottom,
             ),
             child: IntrinsicHeight(
               child: Column(
                 children: [
                   const SizedBox(height: 16),
-                  
+
                   // Back Button to change role
                   Align(
                     alignment: Alignment.centerLeft,
@@ -135,7 +139,7 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
                   ),
 
                   const SizedBox(height: 32),
-                  
+
                   // Logo
                   Container(
                     width: 96,
@@ -155,47 +159,47 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // App Title
-                  const Text(
-                    'ColdOne',
-                    style: TextStyle(
+                  Text(
+                    l10n?.appTitle ?? 'ColdOne',
+                    style: const TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF1E88E5),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 8),
-                  
+
                   // Subtitle
-                  const Text(
-                    'Storage Login',
-                    style: TextStyle(
+                  Text(
+                    l10n?.storageLogin ?? 'Storage Login',
+                    style: const TextStyle(
                       fontSize: 16,
                       color: Color(0xFF666666),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 60),
-                  
+
                   // Phone Number Label
-                  const Align(
+                  Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'Phone Number',
-                      style: TextStyle(
+                      l10n?.phoneNumber ?? 'Phone Number',
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: Color(0xFF333333),
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 12),
-                  
+
                   // Phone Input
                   Container(
                     decoration: BoxDecoration(
@@ -210,7 +214,7 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
                         color: Color(0xFF333333),
                       ),
                       decoration: InputDecoration(
-                        hintText: 'Enter mobile number',
+                        hintText: l10n?.enterMobileNumber ?? 'Enter mobile number',
                         hintStyle: TextStyle(
                           color: Colors.grey.shade400,
                         ),
@@ -226,9 +230,9 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 32),
-                  
+
                   // Send OTP Button
                   SizedBox(
                     width: double.infinity,
@@ -252,23 +256,23 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
                                 strokeWidth: 2,
                               ),
                             )
-                          : const Text(
-                              'Send OTP',
-                              style: TextStyle(
+                          : Text(
+                              l10n?.sendOTP ?? 'Send OTP',
+                              style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                     ),
                   ),
-                  
+
                   const Spacer(),
-                  
+
                   // Footer Text
                   Padding(
                     padding: const EdgeInsets.only(bottom: 32, top: 40),
                     child: Text(
-                      'Secure login for storage operations',
+                      l10n?.secureLogin ?? 'Secure login for storage operations',
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey.shade600,

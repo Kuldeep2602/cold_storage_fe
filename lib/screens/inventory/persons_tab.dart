@@ -15,30 +15,124 @@ class PersonsTab extends StatefulWidget {
 }
 
 class _PersonsTabState extends State<PersonsTab> {
-  Future<List<Person>>? _future;
+  List<Person> _items = [];
+  int _currentPage = 1;
+  bool _hasMore = true;
+  bool _isLoading = false;
+  bool _isLoadingMore = false;
+  String? _error;
+  final ScrollController _scrollController = ScrollController();
   final _search = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _reload();
+    _scrollController.addListener(_onScroll);
+    _loadData();
   }
 
   @override
   void dispose() {
     _search.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      _loadMore();
+    }
+  }
+
+  Future<void> _loadData({bool refresh = false}) async {
+    if (refresh) {
+      setState(() {
+        _currentPage = 1;
+        _hasMore = true;
+        _items = [];
+        _error = null;
+      });
+    }
+
+    if (_isLoading || !_hasMore) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final app = context.read<AppState>();
+      final data = await app.inventory.listPersons(page: _currentPage);
+
+      List<Person> newItems = [];
+      if (data is Map && data.containsKey('results')) {
+        newItems = (data['results'] as List)
+            .map((e) => Person.fromJson((e as Map).cast<String, dynamic>()))
+            .toList();
+        _hasMore = data['next'] != null;
+      } else if (data is List) {
+        newItems = data
+            .map((e) => Person.fromJson((e as Map).cast<String, dynamic>()))
+            .toList();
+        _hasMore = false;
+      }
+
+      if (mounted) {
+        setState(() {
+          if (refresh) {
+            _items = newItems;
+          } else {
+            _items.addAll(newItems);
+          }
+          _isLoading = false;
+          _error = null;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _error = e.toString();
+        });
+      }
+    }
+  }
+
+  Future<void> _loadMore() async {
+    if (_isLoadingMore || !_hasMore || _isLoading) return;
+
+    setState(() => _isLoadingMore = true);
+
+    try {
+      _currentPage++;
+      final app = context.read<AppState>();
+      final data = await app.inventory.listPersons(page: _currentPage);
+
+      List<Person> newItems = [];
+      if (data is Map && data.containsKey('results')) {
+        newItems = (data['results'] as List)
+            .map((e) => Person.fromJson((e as Map).cast<String, dynamic>()))
+            .toList();
+        _hasMore = data['next'] != null;
+      }
+
+      if (mounted) {
+        setState(() {
+          _items.addAll(newItems);
+          _isLoadingMore = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingMore = false;
+          _currentPage--;
+        });
+      }
+    }
+  }
+
   void _reload() {
-    final app = context.read<AppState>();
-    _future = app.inventory.listPersons().then((data) {
-      final list = (data as List).cast<dynamic>();
-      return list
-          .map((e) => Person.fromJson((e as Map).cast<String, dynamic>()))
-          .toList();
-    });
-    setState(() {});
+    _loadData(refresh: true);
   }
 
   Future<void> _findByMobile() async {
@@ -174,38 +268,47 @@ class _PersonsTabState extends State<PersonsTab> {
               ],
             ),
           ),
-          Expanded(
-            child: FutureBuilder<List<Person>>(
-              future: _future,
-              builder: (context, snap) {
-                if (snap.connectionState != ConnectionState.done) {
-                  return const AppLoadingView(label: 'Loading persons...');
-                }
-                if (snap.hasError) {
-                  return AppErrorView(message: snap.error.toString(), onRetry: _reload);
-                }
-                final items = snap.data ?? const <Person>[];
-                if (items.isEmpty) return const Center(child: Text('No persons yet.'));
-
-                return RefreshIndicator(
-                  onRefresh: () async => _reload(),
-                  child: ListView.separated(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    itemCount: items.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
-                    itemBuilder: (_, i) {
-                      final p = items[i];
-                      return ListTile(
-                        title: Text(p.name),
-                        subtitle: Text('${p.mobileNumber} • ${p.personType}'),
-                      );
-                    },
-                  ),
-                );
-              },
-            ),
-          ),
+          Expanded(child: _buildBody()),
         ],
+      ),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_isLoading && _items.isEmpty) {
+      return const AppLoadingView(label: 'Loading persons...');
+    }
+
+    if (_error != null && _items.isEmpty) {
+      return AppErrorView(message: _error!, onRetry: _reload);
+    }
+
+    if (_items.isEmpty) {
+      return const Center(child: Text('No persons yet.'));
+    }
+
+    return RefreshIndicator(
+      onRefresh: () => _loadData(refresh: true),
+      child: ListView.separated(
+        controller: _scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        itemCount: _items.length + (_hasMore ? 1 : 0),
+        separatorBuilder: (_, __) => const Divider(height: 1),
+        itemBuilder: (_, i) {
+          if (i >= _items.length) {
+            return const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+
+          final p = _items[i];
+          return ListTile(
+            key: ValueKey(p.id),
+            title: Text(p.name),
+            subtitle: Text('${p.mobileNumber} • ${p.personType}'),
+          );
+        },
       ),
     );
   }

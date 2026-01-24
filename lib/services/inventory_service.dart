@@ -7,7 +7,11 @@ class InventoryService {
 
   final ApiClient _api;
 
-  Future<dynamic> listPersons() => _api.getJson('/api/inventory/persons/');
+  Future<dynamic> listPersons({int? page}) {
+    final query = <String, String>{};
+    if (page != null) query['page'] = page.toString();
+    return _api.getJson('/api/inventory/persons/', query: query.isEmpty ? null : query);
+  }
 
   Future<Map<String, dynamic>> createPerson({
     required String personType, // farmer|vendor
@@ -76,7 +80,11 @@ class InventoryService {
     );
   }
 
-  Future<dynamic> listInwards() => _api.getJson('/api/inventory/inwards/');
+  Future<dynamic> listInwards({int? page}) {
+    final query = <String, String>{};
+    if (page != null) query['page'] = page.toString();
+    return _api.getJson('/api/inventory/inwards/', query: query.isEmpty ? null : query);
+  }
 
   Future<dynamic> fetchStock({
     int? personId, 
@@ -106,7 +114,11 @@ class InventoryService {
     });
   }
 
-  Future<dynamic> listOutwards() => _api.getJson('/api/inventory/outwards/');
+  Future<dynamic> listOutwards({int? page}) {
+    final query = <String, String>{};
+    if (page != null) query['page'] = page.toString();
+    return _api.getJson('/api/inventory/outwards/', query: query.isEmpty ? null : query);
+  }
 
   Future<dynamic> getReceipt(int outwardId) {
     return _api.getJson('/api/inventory/outwards/$outwardId/receipt/');
