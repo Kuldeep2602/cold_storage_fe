@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_localizations.dart';
 import '../state/app_state.dart';
 
 class AccessPendingScreen extends StatelessWidget {
@@ -10,15 +11,16 @@ class AccessPendingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
     final user = app.user;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Access Pending'),
+        title: Text(l10n?.accessPending ?? 'Access Pending'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () => app.logout(),
-            tooltip: 'Logout',
+            tooltip: l10n?.logout ?? 'Logout',
           ),
         ],
       ),
@@ -31,12 +33,12 @@ class AccessPendingScreen extends StatelessWidget {
               const Icon(Icons.hourglass_empty, size: 80, color: Colors.orange),
               const SizedBox(height: 24),
               Text(
-                'Access Pending',
+                l10n?.accessPending ?? 'Access Pending',
                 style: Theme.of(context).textTheme.headlineMedium,
               ),
               const SizedBox(height: 16),
               Text(
-                'Your account has been created but you don\'t have access yet.',
+                l10n?.accountCreatedNoAccess ?? 'Your account has been created but you don\'t have access yet.',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
@@ -46,19 +48,19 @@ class AccessPendingScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
-                      const Text('Please contact your administrator to:'),
+                      Text(l10n?.contactAdminTo ?? 'Please contact your administrator to:'),
                       const SizedBox(height: 8),
-                      const Text('• Assign you a role (Operator/Manager)'),
-                      const Text('• Activate your account'),
+                      Text('• ${l10n?.assignRole ?? "Assign you a role (Operator/Manager)"}'),
+                      Text('• ${l10n?.activateAccount ?? "Activate your account"}'),
                     ],
                   ),
                 ),
               ),
               const SizedBox(height: 24),
               if (user != null) ...[
-                Text('Phone: ${user.phoneNumber}'),
-                Text('Status: ${user.isActive ? "Active" : "Inactive"}'),
-                Text('Role: ${user.role ?? "Not Assigned"}'),
+                Text('${l10n?.phone ?? "Phone"}: ${user.phoneNumber}'),
+                Text('${l10n?.statusLabel ?? "Status"}: ${user.isActive ? (l10n?.active ?? "Active") : (l10n?.inactive ?? "Inactive")}'),
+                Text('${l10n?.roleLabel ?? "Role"}: ${user.role ?? (l10n?.notAssigned ?? "Not Assigned")}'),
               ],
               const SizedBox(height: 24),
               ElevatedButton.icon(
@@ -69,7 +71,7 @@ class AccessPendingScreen extends StatelessWidget {
                   } catch (_) {}
                 },
                 icon: const Icon(Icons.refresh),
-                label: const Text('Logout & Try Again'),
+                label: Text(l10n?.logoutTryAgain ?? 'Logout & Try Again'),
               ),
             ],
           ),

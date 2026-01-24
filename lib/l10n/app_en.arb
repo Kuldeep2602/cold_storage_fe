@@ -1,0 +1,167 @@
+{
+  "@@locale": "en",
+
+  "appTitle": "ColdOne",
+  "storageLogin": "Storage Login",
+  "phoneNumber": "Phone Number",
+  "enterPhoneNumber": "Enter phone number",
+  "enterMobileNumber": "Enter mobile number",
+  "getOTP": "Get OTP",
+  "sendOTP": "Send OTP",
+  "enterOTP": "Enter OTP",
+  "verify": "Verify",
+  "verifyOTP": "Verify OTP",
+  "logout": "Logout",
+  "continueText": "Continue",
+
+  "chooseLanguage": "Choose your preferred language",
+  "changeLanguageLater": "You can change this later in settings",
+  "languageComingSoon": "This language is coming soon! Please select English for now.",
+
+  "selectRole": "Select role",
+  "operator": "Operator",
+  "operatorDescription": "Handles day-to-day operations",
+  "technician": "Technician",
+  "technicianDescription": "Manages technical aspects",
+  "manager": "Manager",
+  "managerDescription": "Oversees team and operations",
+  "owner": "Owner",
+  "ownerDescription": "Full access and control",
+  "admin": "Admin",
+
+  "secureLogin": "Secure login for storage operations",
+  "pleaseEnterPhone": "Please enter your phone number",
+  "pleaseEnterValidPhone": "Please enter a valid phone number",
+  "unauthorizedContact": "Unauthorized: Please contact your administrator to register.",
+
+  "enterOTPCode": "Enter the 6-digit code sent to",
+  "pleaseEnterCompleteOTP": "Please enter complete OTP",
+  "otpSentSuccess": "OTP sent successfully",
+  "goBack": "Go Back?",
+  "goBackConfirm": "Do you want to go back and change your phone number or role?",
+  "changePhone": "Change Phone",
+  "changeRole": "Change Role",
+  "resendOTPIn": "Resend OTP in {seconds}s",
+  "@resendOTPIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "resendOTP": "Resend OTP",
+  "debugOTP": "Debug OTP: {otp}",
+  "@debugOTP": {
+    "placeholders": {
+      "otp": {
+        "type": "String"
+      }
+    }
+  },
+
+  "accessPending": "Access Pending",
+  "accountCreatedNoAccess": "Your account has been created but you don't have access yet.",
+  "contactAdminTo": "Please contact your administrator to:",
+  "assignRole": "Assign you a role (Operator/Manager)",
+  "activateAccount": "Activate your account",
+  "phone": "Phone",
+  "statusLabel": "Status",
+  "roleLabel": "Role",
+  "notAssigned": "Not Assigned",
+  "logoutTryAgain": "Logout & Try Again",
+
+  "dashboard": "Dashboard",
+  "requests": "Requests",
+  "inventory": "Inventory",
+  "staff": "Staff",
+  "rooms": "Rooms",
+  "alerts": "Alerts",
+  "reports": "Reports",
+  "temp": "Temp",
+  "ledger": "Ledger",
+  "payments": "Payments",
+  "profile": "Profile",
+
+  "operatorMenu": "Operator Menu",
+  "selectOperation": "Select operation",
+  "inwardEntry": "Inward Entry",
+  "stockLoadingEntry": "Stock loading entry",
+  "outwardEntry": "Outward Entry",
+  "stockUnloadingEntry": "Stock unloading entry",
+
+  "technicianMenu": "Technician Menu",
+  "temperatureMonitoring": "Temperature Monitoring",
+  "monitorRoomTemp": "Monitor room temperatures",
+
+  "coldStorages": "Cold Storages",
+  "addColdStorage": "Add Cold Storage",
+  "coldStorageName": "Cold Storage Name",
+  "coldStorageCode": "Cold Storage Code",
+  "location": "Location",
+  "totalCapacity": "Total Capacity",
+  "availableCapacity": "Available Capacity",
+  "temperature": "Temperature",
+  "status": "Status",
+  "active": "Active",
+  "inactive": "Inactive",
+
+  "staffManagement": "Staff Management",
+  "addStaffMember": "Add Staff Member",
+  "name": "Name",
+  "role": "Role",
+  "assignStorages": "Assign Storages",
+  "assignRooms": "Assign Rooms",
+  "inwardOutwardOperator": "Inward/Outward Operator",
+  "technicianTemp": "Technician (Temperature)",
+
+  "roomManagement": "Room Management",
+  "addRoom": "Add Room",
+  "roomName": "Room Name",
+  "roomNumber": "Room Number",
+  "capacity": "Capacity",
+  "currentOccupancy": "Current Occupancy",
+
+  "temperatureAlerts": "Temperature Alerts",
+  "critical": "Critical",
+  "warning": "Warning",
+  "normal": "Normal",
+  "resolveAlert": "Resolve Alert",
+
+  "productName": "Product Name",
+  "quantity": "Quantity",
+  "unit": "Unit",
+  "customerName": "Customer Name",
+  "entryDate": "Entry Date",
+  "exitDate": "Exit Date",
+
+  "save": "Save",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "edit": "Edit",
+  "add": "Add",
+  "update": "Update",
+  "search": "Search",
+  "filter": "Filter",
+  "refresh": "Refresh",
+
+  "error": "Error",
+  "success": "Success",
+  "loading": "Loading...",
+  "noDataAvailable": "No data available",
+  "confirmDelete": "Are you sure you want to delete?",
+
+  "kg": "kg",
+  "tons": "tons",
+  "liters": "liters",
+  "units": "units",
+
+  "selectLanguage": "Select Language",
+  "english": "English",
+  "hindi": "हिंदी",
+
+  "apiBaseUrl": "API base URL",
+  "apiBaseUrlExample": "Example: http://127.0.0.1:8000",
+  "saveApiUrl": "Save API URL",
+  "baseUrlSaved": "Base URL saved",
+  "manageUsers": "Manage users"
+}

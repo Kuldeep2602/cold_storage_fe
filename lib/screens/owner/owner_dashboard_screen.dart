@@ -71,7 +71,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   }
 }
 
-
 /// Helper function to safely convert any value to double
 double _toDouble(dynamic value) {
   if (value == null) return 0.0;
@@ -80,7 +79,6 @@ double _toDouble(dynamic value) {
   if (value is String) return double.tryParse(value) ?? 0.0;
   return 0.0;
 }
-
 
 class OwnerOverviewTab extends StatefulWidget {
   const OwnerOverviewTab({super.key});
@@ -106,14 +104,19 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
     try {
       final appState = context.read<AppState>();
       final csId = _selectedColdStorage?['id']?.toString() ?? '';
-      final query = csId.isNotEmpty ? {'cold_storage': csId} : <String, String>{};
-      final data = await appState.client.getJson('/api/inventory/owner-dashboard/', query: query);
-      
+      final query =
+          csId.isNotEmpty ? {'cold_storage': csId} : <String, String>{};
+      final data = await appState.client
+          .getJson('/api/inventory/owner-dashboard/', query: query);
+
       if (mounted && data != null) {
         final response = data as Map<String, dynamic>;
         setState(() {
-          _coldStorages = (response['cold_storages'] as List?)?.cast<Map<String, dynamic>>() ?? [];
-          _selectedColdStorage = response['selected_cold_storage'] as Map<String, dynamic>?;
+          _coldStorages = (response['cold_storages'] as List?)
+                  ?.cast<Map<String, dynamic>>() ??
+              [];
+          _selectedColdStorage =
+              response['selected_cold_storage'] as Map<String, dynamic>?;
           _stats = response['stats'] as Map<String, dynamic>?;
           _isLoading = false;
         });
@@ -125,16 +128,41 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
           _isLoading = false;
           // Demo data
           _coldStorages = [
-            {'id': 1, 'name': 'ColdOne', 'code': 'COLD1', 'display_name': 'ColdOne Nashik Main', 'city': 'Nashik'},
-            {'id': 2, 'name': 'ColdTwo', 'code': 'COLD2', 'display_name': 'ColdTwo Pune', 'city': 'Pune'},
+            {
+              'id': 1,
+              'name': 'ColdOne',
+              'code': 'COLD1',
+              'display_name': 'ColdOne Nashik Main',
+              'city': 'Nashik'
+            },
+            {
+              'id': 2,
+              'name': 'ColdTwo',
+              'code': 'COLD2',
+              'display_name': 'ColdTwo Pune',
+              'city': 'Pune'
+            },
           ];
-          _selectedColdStorage = _coldStorages.isNotEmpty ? _coldStorages.first : null;
+          _selectedColdStorage =
+              _coldStorages.isNotEmpty ? _coldStorages.first : null;
           _stats = {
-            'storage': {'total_capacity': 500, 'occupied': 350, 'available': 150, 'utilization_percent': 70},
+            'storage': {
+              'total_capacity': 500,
+              'occupied': 350,
+              'available': 150,
+              'utilization_percent': 70
+            },
             'this_month': {'inflow': 145, 'outflow': 95},
             'bookings': {'active': 12, 'confirmed': 8, 'pending': 4},
-            'alerts': {'active': 2, 'temperature_alerts': 2, 'equipment_status': 'operational'},
-            'financials': {'estimated_revenue': 4.2, 'avg_storage_duration': 68},
+            'alerts': {
+              'active': 2,
+              'temperature_alerts': 2,
+              'equipment_status': 'operational'
+            },
+            'financials': {
+              'estimated_revenue': 4.2,
+              'avg_storage_duration': 68
+            },
           };
         });
       }
@@ -143,7 +171,8 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
 
   void _onColdStorageChanged(int? id) {
     if (id != null) {
-      final cs = _coldStorages.firstWhere((c) => c['id'] == id, orElse: () => _coldStorages.first);
+      final cs = _coldStorages.firstWhere((c) => c['id'] == id,
+          orElse: () => _coldStorages.first);
       setState(() => _selectedColdStorage = cs);
       _loadData();
     }
@@ -179,7 +208,8 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
                           color: Colors.white.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.analytics_outlined, color: Colors.white, size: 24),
+                        child: const Icon(Icons.analytics_outlined,
+                            color: Colors.white, size: 24),
                       ),
                       const SizedBox(width: 12),
                       const Expanded(
@@ -211,21 +241,24 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white.withOpacity(0.2),
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
                           ),
                         ),
-                        child: const Text('Logout', style: TextStyle(fontWeight: FontWeight.w600)),
+                        child: const Text('Logout',
+                            style: TextStyle(fontWeight: FontWeight.w600)),
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Cold Storage Dropdown
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(8),
@@ -249,17 +282,61 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
                                   child: DropdownButton<int>(
                                     value: _selectedColdStorage?['id'] as int?,
                                     isExpanded: true,
-                                    icon: Icon(Icons.keyboard_arrow_down, color: Colors.blue[700]),
-                                    style: TextStyle(
+                                    icon: Icon(Icons.keyboard_arrow_down,
+                                        color: Colors.blue[700]),
+                                    dropdownColor: Colors.white,
+                                    menuMaxHeight: 320,
+                                    borderRadius: BorderRadius.circular(12),
+                                    style: const TextStyle(
                                       fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.blue[800],
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF0D47A1),
                                     ),
-                                    hint: Text('Select Storage', style: TextStyle(color: Colors.grey[600])),
+                                    hint: Text('Select Storage',
+                                        style:
+                                            TextStyle(color: Colors.grey[600])),
                                     items: _coldStorages.map((cs) {
                                       return DropdownMenuItem<int>(
                                         value: cs['id'] as int?,
-                                        child: Text(cs['display_name']?.toString() ?? cs['name']?.toString() ?? ''),
+                                        child: Row(
+                                          children: [
+                                            const Icon(Icons.ac_unit,
+                                                size: 18,
+                                                color: Color(0xFF1976D2)),
+                                            const SizedBox(width: 10),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    cs['display_name']
+                                                            ?.toString() ??
+                                                        cs['name']?.toString() ??
+                                                        '',
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                  if ((cs['city'] ?? '')
+                                                      .toString()
+                                                      .isNotEmpty)
+                                                    Text(
+                                                      cs['city'].toString(),
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow
+                                                          .ellipsis,
+                                                      style: TextStyle(
+                                                        fontSize: 12,
+                                                        color:
+                                                            Colors.grey[600],
+                                                      ),
+                                                    ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       );
                                     }).toList(),
                                     onChanged: _onColdStorageChanged,
@@ -284,24 +361,24 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
                         children: [
                           // Storage Utilization Card
                           _buildStorageUtilizationCard(),
-                          
+
                           const SizedBox(height: 16),
-                          
+
                           // This Month Card
                           _buildThisMonthCard(),
-                          
+
                           const SizedBox(height: 16),
-                          
+
                           // Active Bookings Card
                           _buildActiveBookingsCard(),
-                          
+
                           const SizedBox(height: 16),
-                          
+
                           // Alert Summary Card
                           _buildAlertSummaryCard(),
-                          
+
                           const SizedBox(height: 16),
-                          
+
                           // Revenue and Duration Row
                           _buildFinancialsRow(),
                         ],
@@ -554,7 +631,8 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
                   color: const Color(0xFFE3F2FD),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.description, color: Color(0xFF1976D2), size: 20),
+                child: const Icon(Icons.description,
+                    color: Color(0xFF1976D2), size: 20),
               ),
               const SizedBox(width: 12),
               const Expanded(
@@ -568,7 +646,8 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
                   color: const Color(0xFF4CAF50),
                   borderRadius: BorderRadius.circular(20),
@@ -631,7 +710,8 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
     final alerts = _stats?['alerts'] as Map<String, dynamic>? ?? {};
     final activeAlerts = alerts['active'] ?? 0;
     final tempAlerts = alerts['temperature_alerts'] ?? 0;
-    final equipmentStatus = alerts['equipment_status']?.toString() ?? 'operational';
+    final equipmentStatus =
+        alerts['equipment_status']?.toString() ?? 'operational';
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -657,7 +737,8 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
                   color: const Color(0xFFFFEBEE),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.warning_amber, color: Color(0xFFF44336), size: 20),
+                child: const Icon(Icons.warning_amber,
+                    color: Color(0xFFF44336), size: 20),
               ),
               const SizedBox(width: 12),
               const Expanded(
@@ -672,7 +753,8 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
               ),
               if (activeAlerts > 0)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF44336),
                     borderRadius: BorderRadius.circular(20),
@@ -689,12 +771,14 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
             ],
           ),
           const SizedBox(height: 16),
-          
+
           // Temperature Alerts
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: tempAlerts > 0 ? const Color(0xFFFFEBEE) : const Color(0xFFE8F5E9),
+              color: tempAlerts > 0
+                  ? const Color(0xFFFFEBEE)
+                  : const Color(0xFFE8F5E9),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
@@ -708,15 +792,21 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: tempAlerts > 0 ? Colors.red[800] : Colors.green[800],
+                          color: tempAlerts > 0
+                              ? Colors.red[800]
+                              : Colors.green[800],
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        tempAlerts > 0 ? '$tempAlerts rooms out of range' : 'All rooms normal',
+                        tempAlerts > 0
+                            ? '$tempAlerts rooms out of range'
+                            : 'All rooms normal',
                         style: TextStyle(
                           fontSize: 13,
-                          color: tempAlerts > 0 ? Colors.red[600] : Colors.green[600],
+                          color: tempAlerts > 0
+                              ? Colors.red[600]
+                              : Colors.green[600],
                         ),
                       ),
                     ],
@@ -729,9 +819,9 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
               ],
             ),
           ),
-          
+
           const SizedBox(height: 10),
-          
+
           // Equipment Status
           Container(
             padding: const EdgeInsets.all(12),
@@ -755,7 +845,9 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        equipmentStatus == 'operational' ? 'All systems operational' : equipmentStatus,
+                        equipmentStatus == 'operational'
+                            ? 'All systems operational'
+                            : equipmentStatus,
                         style: TextStyle(
                           fontSize: 13,
                           color: Colors.green[600],
@@ -821,7 +913,7 @@ class _OwnerOverviewTabState extends State<OwnerOverviewTab> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '+12% vs last month',
+                  '',
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.green[600],

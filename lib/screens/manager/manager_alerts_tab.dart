@@ -25,16 +25,25 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
     setState(() => _isLoading = true);
     try {
       final appState = context.read<AppState>();
-      
+
       // Load active alerts
       final alerts = await appState.client.getJson(
         '/api/temperature/alerts/',
         query: {'status': 'active'},
       );
-      
+
       if (mounted) {
-        final alertsList = (alerts as List?)?.cast<Map<String, dynamic>>() ?? [];
-        
+        // Handle both paginated and non-paginated responses
+        List<Map<String, dynamic>> alertsList;
+        if (alerts is Map && alerts.containsKey('results')) {
+          alertsList =
+              (alerts['results'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+        } else if (alerts is List) {
+          alertsList = alerts.cast<Map<String, dynamic>>();
+        } else {
+          alertsList = [];
+        }
+
         setState(() {
           _activeAlerts = alertsList;
           _normalRooms = []; // We'll load this separately if needed
@@ -48,6 +57,7 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
           _normalRooms = [];
           _isLoading = false;
         });
+        debugPrint('Error loading alerts: $e');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading alerts: $e')),
         );
@@ -58,7 +68,8 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
   Future<void> _takeAction(int alertId, String action) async {
     try {
       final appState = context.read<AppState>();
-      await appState.client.postJson('/api/temperature/alerts/$alertId/take-action/', {
+      await appState.client
+          .postJson('/api/temperature/alerts/$alertId/take-action/', {
         'action': action,
       });
       _loadAlerts();
@@ -99,7 +110,8 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
                       color: Colors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.warning_amber, color: Colors.white, size: 24),
+                    child: const Icon(Icons.warning_amber,
+                        color: Colors.white, size: 24),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -131,12 +143,14 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
                       foregroundColor: const Color(0xFFF44336),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
-                    child: const Text('Logout', style: TextStyle(fontWeight: FontWeight.w600)),
+                    child: const Text('Logout',
+                        style: TextStyle(fontWeight: FontWeight.w600)),
                   ),
                 ],
               ),
@@ -155,7 +169,8 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
                           if (_activeAlerts.isNotEmpty) ...[
                             Row(
                               children: [
-                                const Icon(Icons.warning, color: Color(0xFFF44336), size: 20),
+                                const Icon(Icons.warning,
+                                    color: Color(0xFFF44336), size: 20),
                                 const SizedBox(width: 8),
                                 const Text(
                                   'Active Alerts',
@@ -168,7 +183,8 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
                               ],
                             ),
                             const SizedBox(height: 12),
-                            ..._activeAlerts.map((alert) => _buildAlertCard(alert)),
+                            ..._activeAlerts
+                                .map((alert) => _buildAlertCard(alert)),
                           ],
 
                           if (_activeAlerts.isEmpty)
@@ -216,7 +232,8 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
                           if (_normalRooms.isNotEmpty) ...[
                             Row(
                               children: [
-                                const Icon(Icons.check_circle, color: Color(0xFF4CAF50), size: 20),
+                                const Icon(Icons.check_circle,
+                                    color: Color(0xFF4CAF50), size: 20),
                                 const SizedBox(width: 8),
                                 const Text(
                                   'Normal Status',
@@ -229,7 +246,8 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
                               ],
                             ),
                             const SizedBox(height: 12),
-                            ..._normalRooms.map((room) => _buildNormalRoomCard(room)),
+                            ..._normalRooms
+                                .map((room) => _buildNormalRoomCard(room)),
                           ],
                         ],
                       ),
@@ -244,10 +262,12 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
   Widget _buildAlertCard(Map<String, dynamic> alert) {
     final severity = alert['severity']?.toString().toLowerCase() ?? 'medium';
     final isHigh = severity == 'high' || severity == 'critical';
-    
+
     final bgColor = isHigh ? const Color(0xFFFFEBEE) : const Color(0xFFFFF8E1);
-    final borderColor = isHigh ? const Color(0xFFFFCDD2) : const Color(0xFFFFE082);
-    final severityColor = isHigh ? const Color(0xFFF44336) : const Color(0xFFFF9800);
+    final borderColor =
+        isHigh ? const Color(0xFFFFCDD2) : const Color(0xFFFFE082);
+    final severityColor =
+        isHigh ? const Color(0xFFF44336) : const Color(0xFFFF9800);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -280,7 +300,8 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
                         color: severityColor.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Icon(Icons.warning, color: severityColor, size: 20),
+                      child:
+                          Icon(Icons.warning, color: severityColor, size: 20),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -297,7 +318,8 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
                           ),
                           Row(
                             children: [
-                              Icon(Icons.access_time, size: 14, color: Colors.grey[500]),
+                              Icon(Icons.access_time,
+                                  size: 14, color: Colors.grey[500]),
                               const SizedBox(width: 4),
                               Text(
                                 alert['time_ago'] ?? '',
@@ -312,7 +334,8 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         color: severityColor,
                         borderRadius: BorderRadius.circular(8),
@@ -354,7 +377,8 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
                             const SizedBox(height: 4),
                             Row(
                               children: [
-                                Icon(Icons.thermostat, color: severityColor, size: 20),
+                                Icon(Icons.thermostat,
+                                    color: severityColor, size: 20),
                                 const SizedBox(width: 4),
                                 Text(
                                   '${alert['temperature']}°C',
@@ -462,7 +486,8 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
               color: const Color(0xFFE8F5E9),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.thermostat, color: Color(0xFF4CAF50), size: 24),
+            child: const Icon(Icons.thermostat,
+                color: Color(0xFF4CAF50), size: 24),
           ),
           const SizedBox(width: 14),
           Expanded(

@@ -115,11 +115,37 @@ class ApiClient {
   }
 
   Future<dynamic> getJson(String path, {Map<String, String>? query}) async {
-    final resp = await http.get(_uri(path, query), headers: _headers());
-    final data = resp.body.isEmpty ? null : jsonDecode(resp.body);
-    _checkStatusCode(resp.statusCode, data);
-    return data;
+    try {
+      final uri = _uri(path, query);
+      final headers = _headers();
+
+      if (kDebugMode) {
+        print('🌐 GET $uri');
+        print('📋 Headers: ${headers.keys.join(", ")}');
+        if (headers.containsKey('Authorization')) {
+          print('🔑 Auth: ${headers['Authorization']?.substring(0, 20)}...');
+        } else {
+          print('⚠️ No Authorization header!');
+        }
+      }
+
+      final resp = await http.get(uri, headers: headers);
+
+      if (kDebugMode) {
+        print('📥 Response: ${resp.statusCode}');
+      }
+
+      final data = resp.body.isEmpty ? null : jsonDecode(resp.body);
+      _checkStatusCode(resp.statusCode, data);
+      return data;
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ API Error: $e');
+      }
+      rethrow;
+    }
   }
+
   Future<Map<String, dynamic>> deleteJson(String path,
       {Map<String, String>? query}) async {
     final resp = await http.delete(_uri(path, query), headers: _headers());

@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../l10n/app_localizations.dart';
+import '../../state/app_state.dart';
 import 'inward_entry_screen.dart';
 import 'outward_entry_screen.dart';
-import '../../state/app_state.dart';
-import 'package:provider/provider.dart';
 
 class OperatorMenuScreen extends StatelessWidget {
   const OperatorMenuScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -27,19 +30,19 @@ class OperatorMenuScreen extends StatelessWidget {
                 children: [
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
+                    children: [
                       Text(
-                        'Operator Menu',
-                        style: TextStyle(
+                        l10n?.operatorMenu ?? 'Operator Menu',
+                        style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
-                        'Select operation',
-                        style: TextStyle(
+                        l10n?.selectOperation ?? 'Select operation',
+                        style: const TextStyle(
                           fontSize: 14,
                           color: Colors.white70,
                         ),
@@ -58,9 +61,9 @@ class OperatorMenuScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: const Text(
-                      'Logout',
-                      style: TextStyle(fontWeight: FontWeight.w600),
+                    child: Text(
+                      l10n?.logout ?? 'Logout',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                   ),
                 ],
@@ -79,8 +82,8 @@ class OperatorMenuScreen extends StatelessWidget {
                     icon: Icons.arrow_downward_rounded,
                     iconColor: const Color(0xFF4CAF50),
                     iconBgColor: const Color(0xFFE8F5E9),
-                    title: 'Inward Entry',
-                    subtitle: 'Stock loading entry',
+                    title: l10n?.inwardEntry ?? 'Inward Entry',
+                    subtitle: l10n?.stockLoadingEntry ?? 'Stock loading entry',
                     onTap: () {
                       Navigator.push(
                         context,
@@ -98,8 +101,8 @@ class OperatorMenuScreen extends StatelessWidget {
                     icon: Icons.arrow_upward_rounded,
                     iconColor: const Color(0xFFFF9800),
                     iconBgColor: const Color(0xFFFFF3E0),
-                    title: 'Outward Entry',
-                    subtitle: 'Stock unloading entry',
+                    title: l10n?.outwardEntry ?? 'Outward Entry',
+                    subtitle: l10n?.stockUnloadingEntry ?? 'Stock unloading entry',
                     onTap: () {
                       Navigator.push(
                         context,
@@ -149,7 +152,7 @@ class _MenuCard extends StatelessWidget {
           border: Border.all(color: const Color(0xFFE0E0E0)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),

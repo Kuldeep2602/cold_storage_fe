@@ -1,0 +1,167 @@
+{
+  "@@locale": "hi",
+
+  "appTitle": "कोल्डवन",
+  "storageLogin": "स्टोरेज लॉगिन",
+  "phoneNumber": "फ़ोन नंबर",
+  "enterPhoneNumber": "फ़ोन नंबर दर्ज करें",
+  "enterMobileNumber": "मोबाइल नंबर दर्ज करें",
+  "getOTP": "OTP प्राप्त करें",
+  "sendOTP": "OTP भेजें",
+  "enterOTP": "OTP दर्ज करें",
+  "verify": "सत्यापित करें",
+  "verifyOTP": "OTP सत्यापित करें",
+  "logout": "लॉग आउट",
+  "continueText": "जारी रखें",
+
+  "chooseLanguage": "अपनी पसंदीदा भाषा चुनें",
+  "changeLanguageLater": "आप इसे बाद में सेटिंग्स में बदल सकते हैं",
+  "languageComingSoon": "यह भाषा जल्द आ रही है! कृपया अभी अंग्रेज़ी चुनें।",
+
+  "selectRole": "भूमिका चुनें",
+  "operator": "ऑपरेटर",
+  "operatorDescription": "दैनिक कार्यों को संभालता है",
+  "technician": "तकनीशियन",
+  "technicianDescription": "तकनीकी पहलुओं का प्रबंधन करता है",
+  "manager": "प्रबंधक",
+  "managerDescription": "टीम और संचालन की देखरेख करता है",
+  "owner": "मालिक",
+  "ownerDescription": "पूर्ण पहुंच और नियंत्रण",
+  "admin": "व्यवस्थापक",
+
+  "secureLogin": "स्टोरेज संचालन के लिए सुरक्षित लॉगिन",
+  "pleaseEnterPhone": "कृपया अपना फ़ोन नंबर दर्ज करें",
+  "pleaseEnterValidPhone": "कृपया एक वैध फ़ोन नंबर दर्ज करें",
+  "unauthorizedContact": "अनधिकृत: कृपया पंजीकरण के लिए अपने व्यवस्थापक से संपर्क करें।",
+
+  "enterOTPCode": "इस नंबर पर भेजा गया 6 अंकों का कोड दर्ज करें",
+  "pleaseEnterCompleteOTP": "कृपया पूरा OTP दर्ज करें",
+  "otpSentSuccess": "OTP सफलतापूर्वक भेजा गया",
+  "goBack": "वापस जाएं?",
+  "goBackConfirm": "क्या आप वापस जाकर अपना फ़ोन नंबर या भूमिका बदलना चाहते हैं?",
+  "changePhone": "फ़ोन बदलें",
+  "changeRole": "भूमिका बदलें",
+  "resendOTPIn": "{seconds} सेकंड में OTP पुनः भेजें",
+  "@resendOTPIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "resendOTP": "OTP पुनः भेजें",
+  "debugOTP": "डीबग OTP: {otp}",
+  "@debugOTP": {
+    "placeholders": {
+      "otp": {
+        "type": "String"
+      }
+    }
+  },
+
+  "accessPending": "पहुंच लंबित",
+  "accountCreatedNoAccess": "आपका खाता बना दिया गया है लेकिन आपको अभी पहुंच नहीं है।",
+  "contactAdminTo": "कृपया अपने व्यवस्थापक से संपर्क करें:",
+  "assignRole": "आपको एक भूमिका सौंपें (ऑपरेटर/प्रबंधक)",
+  "activateAccount": "अपना खाता सक्रिय करें",
+  "phone": "फ़ोन",
+  "statusLabel": "स्थिति",
+  "roleLabel": "भूमिका",
+  "notAssigned": "नियुक्त नहीं",
+  "logoutTryAgain": "लॉगआउट करें और पुनः प्रयास करें",
+
+  "dashboard": "डैशबोर्ड",
+  "requests": "अनुरोध",
+  "inventory": "इन्वेंटरी",
+  "staff": "कर्मचारी",
+  "rooms": "कमरे",
+  "alerts": "अलर्ट",
+  "reports": "रिपोर्ट",
+  "temp": "तापमान",
+  "ledger": "खाता बही",
+  "payments": "भुगतान",
+  "profile": "प्रोफ़ाइल",
+
+  "operatorMenu": "ऑपरेटर मेनू",
+  "selectOperation": "संचालन चुनें",
+  "inwardEntry": "आवक प्रवेश",
+  "stockLoadingEntry": "स्टॉक लोडिंग प्रवेश",
+  "outwardEntry": "जावक प्रवेश",
+  "stockUnloadingEntry": "स्टॉक अनलोडिंग प्रवेश",
+
+  "technicianMenu": "तकनीशियन मेनू",
+  "temperatureMonitoring": "तापमान निगरानी",
+  "monitorRoomTemp": "कमरे के तापमान की निगरानी करें",
+
+  "coldStorages": "कोल्ड स्टोरेज",
+  "addColdStorage": "कोल्ड स्टोरेज जोड़ें",
+  "coldStorageName": "कोल्ड स्टोरेज का नाम",
+  "coldStorageCode": "कोल्ड स्टोरेज कोड",
+  "location": "स्थान",
+  "totalCapacity": "कुल क्षमता",
+  "availableCapacity": "उपलब्ध क्षमता",
+  "temperature": "तापमान",
+  "status": "स्थिति",
+  "active": "सक्रिय",
+  "inactive": "निष्क्रिय",
+
+  "staffManagement": "कर्मचारी प्रबंधन",
+  "addStaffMember": "कर्मचारी जोड़ें",
+  "name": "नाम",
+  "role": "भूमिका",
+  "assignStorages": "स्टोरेज आवंटित करें",
+  "assignRooms": "कमरे आवंटित करें",
+  "inwardOutwardOperator": "आवक/जावक संचालक",
+  "technicianTemp": "तकनीशियन (तापमान)",
+
+  "roomManagement": "कमरा प्रबंधन",
+  "addRoom": "कमरा जोड़ें",
+  "roomName": "कमरे का नाम",
+  "roomNumber": "कमरा नंबर",
+  "capacity": "क्षमता",
+  "currentOccupancy": "वर्तमान अधिभोग",
+
+  "temperatureAlerts": "तापमान अलर्ट",
+  "critical": "गंभीर",
+  "warning": "चेतावनी",
+  "normal": "सामान्य",
+  "resolveAlert": "अलर्ट समाधान करें",
+
+  "productName": "उत्पाद का नाम",
+  "quantity": "मात्रा",
+  "unit": "इकाई",
+  "customerName": "ग्राहक का नाम",
+  "entryDate": "प्रवेश तिथि",
+  "exitDate": "निकास तिथि",
+
+  "save": "सहेजें",
+  "cancel": "रद्द करें",
+  "delete": "हटाएं",
+  "edit": "संपादित करें",
+  "add": "जोड़ें",
+  "update": "अपडेट करें",
+  "search": "खोजें",
+  "filter": "फ़िल्टर",
+  "refresh": "ताज़ा करें",
+
+  "error": "त्रुटि",
+  "success": "सफलता",
+  "loading": "लोड हो रहा है...",
+  "noDataAvailable": "कोई डेटा उपलब्ध नहीं",
+  "confirmDelete": "क्या आप वाकई हटाना चाहते हैं?",
+
+  "kg": "किग्रा",
+  "tons": "टन",
+  "liters": "लीटर",
+  "units": "इकाइयाँ",
+
+  "selectLanguage": "भाषा चुनें",
+  "english": "English",
+  "hindi": "हिंदी",
+
+  "apiBaseUrl": "API बेस URL",
+  "apiBaseUrlExample": "उदाहरण: http://127.0.0.1:8000",
+  "saveApiUrl": "API URL सहेजें",
+  "baseUrlSaved": "बेस URL सहेजा गया",
+  "manageUsers": "उपयोगकर्ता प्रबंधित करें"
+}

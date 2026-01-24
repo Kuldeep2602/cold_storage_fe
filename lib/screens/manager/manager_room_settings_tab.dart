@@ -24,38 +24,206 @@ class _ManagerRoomSettingsTabState extends State<ManagerRoomSettingsTab> {
     setState(() => _isLoading = true);
     try {
       final appState = context.read<AppState>();
-      final user = appState.user;
-      
-      if (user != null && user.assignedStorages.isNotEmpty) {
-        final rooms = <Map<String, dynamic>>[];
-        for (final storage in user.assignedStorages) {
-          for (final room in storage.rooms) {
-            rooms.add({
-              'id': room.id,
-              'room_name': room.roomName,
-              'cold_storage_name': storage.displayName,
-              'cold_storage_id': storage.id,
-              'min_temperature': -5.0,
-              'max_temperature': 0.0,
-              'current_temperature': null,
-            });
-          }
-        }
-        
-        if (mounted) {
-          setState(() {
-            _rooms = rooms;
-            _isLoading = false;
-          });
-        }
+      // Load rooms from API
+      final data = await appState.client.getJson('/api/inventory/rooms/');
+
+      List<Map<String, dynamic>> rooms;
+      if (data is Map && data.containsKey('results')) {
+        rooms = (data['results'] as List).cast<Map<String, dynamic>>();
+      } else if (data is List) {
+        rooms = data.cast<Map<String, dynamic>>();
+      } else {
+        rooms = [];
+      }
+
+      if (mounted) {
+        setState(() {
+          _rooms = rooms;
+          _isLoading = false;
+        });
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
+        debugPrint('Error loading rooms: $e');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading rooms: $e')),
         );
       }
+    }
+  }
+
+  Future<void> _showAddRoomDialog() async {
+    final appState = context.read<AppState>();
+
+    // Get manager's assigned cold storages
+    final dashboardData =
+        await appState.client.getJson('/api/inventory/manager-dashboard/');
+    final coldStorages = (dashboardData['cold_storages'] as List?)
+            ?.cast<Map<String, dynamic>>() ??
+        [];
+
+    if (coldStorages.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No storages assigned to you')),
+        );
+      }
+      return;
+    }
+
+    final roomNameController = TextEditingController();
+    final capacityController = TextEditingController(text: '100');
+    final minTempController = TextEditingController(text: '-5');
+    final maxTempController = TextEditingController(text: '0');
+    int? selectedStorageId = coldStorages.first['id'] as int?;
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Add New Room'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Cold Storage *',
+                    style:
+                        TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<int>(
+                  value: selectedStorageId,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 14),
+                  ),
+                  items: coldStorages.map((cs) {
+                    return DropdownMenuItem<int>(
+                      value: cs['id'] as int,
+                      child: Text(cs['display_name'] ?? cs['name'] ?? ''),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setDialogState(() => selectedStorageId = value);
+                  },
+                ),
+                const SizedBox(height: 16),
+                const Text('Room Name *',
+                    style:
+                        TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: roomNameController,
+                  decoration: InputDecoration(
+                    hintText: 'e.g. Room A',
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text('Capacity (MT)',
+                    style:
+                        TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: capacityController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    hintText: '100',
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text('Min Temperature (°C)',
+                    style:
+                        TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: minTempController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true, signed: true),
+                  decoration: InputDecoration(
+                    hintText: '-5',
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text('Max Temperature (°C)',
+                    style:
+                        TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: maxTempController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true, signed: true),
+                  decoration: InputDecoration(
+                    hintText: '0',
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (roomNameController.text.trim().isEmpty ||
+                    selectedStorageId == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text('Room name and storage are required')),
+                  );
+                  return;
+                }
+
+                try {
+                  final body = {
+                    'cold_storage': selectedStorageId,
+                    'room_name': roomNameController.text.trim(),
+                    'capacity': double.tryParse(capacityController.text) ?? 100,
+                    'min_temperature':
+                        double.tryParse(minTempController.text) ?? -5,
+                    'max_temperature':
+                        double.tryParse(maxTempController.text) ?? 0,
+                  };
+
+                  await appState.client.postJson('/api/inventory/rooms/', body);
+
+                  if (context.mounted) {
+                    Navigator.pop(context, true);
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error: $e')),
+                    );
+                  }
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1976D2)),
+              child: const Text('Add Room'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (result == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Room added successfully')),
+      );
+      _loadRooms();
     }
   }
 
@@ -139,7 +307,8 @@ class _ManagerRoomSettingsTabState extends State<ManagerRoomSettingsTab> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
+                    Icon(Icons.info_outline,
+                        color: Colors.blue.shade700, size: 20),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -166,7 +335,7 @@ class _ManagerRoomSettingsTabState extends State<ManagerRoomSettingsTab> {
               try {
                 final minTemp = double.parse(minController.text);
                 final maxTemp = double.parse(maxController.text);
-                
+
                 if (minTemp >= maxTemp) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -175,7 +344,7 @@ class _ManagerRoomSettingsTabState extends State<ManagerRoomSettingsTab> {
                   );
                   return;
                 }
-                
+
                 final appState = context.read<AppState>();
                 await appState.client.patchJson(
                   '/api/inventory/rooms/${room['id']}/',
@@ -184,7 +353,7 @@ class _ManagerRoomSettingsTabState extends State<ManagerRoomSettingsTab> {
                     'max_temperature': maxTemp,
                   },
                 );
-                
+
                 Navigator.pop(context, true);
               } catch (e) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -232,7 +401,8 @@ class _ManagerRoomSettingsTabState extends State<ManagerRoomSettingsTab> {
                       color: Colors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.settings, color: Colors.white, size: 24),
+                    child: const Icon(Icons.settings,
+                        color: Colors.white, size: 24),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -264,12 +434,14 @@ class _ManagerRoomSettingsTabState extends State<ManagerRoomSettingsTab> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
                       foregroundColor: const Color(0xFF1976D2),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
-                    child: const Text('Logout', style: TextStyle(fontWeight: FontWeight.w600)),
+                    child: const Text('Logout',
+                        style: TextStyle(fontWeight: FontWeight.w600)),
                   ),
                 ],
               ),
@@ -284,8 +456,8 @@ class _ManagerRoomSettingsTabState extends State<ManagerRoomSettingsTab> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.meeting_room_outlined, 
-                                   size: 80, color: Colors.grey[400]),
+                              Icon(Icons.meeting_room_outlined,
+                                  size: 80, color: Colors.grey[400]),
                               const SizedBox(height: 16),
                               Text(
                                 'No rooms found',
@@ -312,6 +484,12 @@ class _ManagerRoomSettingsTabState extends State<ManagerRoomSettingsTab> {
             ),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _showAddRoomDialog,
+        backgroundColor: const Color(0xFF1976D2),
+        icon: const Icon(Icons.add),
+        label: const Text('Add Room'),
       ),
     );
   }
@@ -347,7 +525,8 @@ class _ManagerRoomSettingsTabState extends State<ManagerRoomSettingsTab> {
                     color: const Color(0xFFE3F2FD),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.meeting_room, color: Color(0xFF1976D2), size: 24),
+                  child: const Icon(Icons.meeting_room,
+                      color: Color(0xFF1976D2), size: 24),
                 ),
                 const SizedBox(width: 14),
                 Expanded(

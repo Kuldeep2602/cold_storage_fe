@@ -8,6 +8,13 @@ class StaffService {
   /// Get all staff members
   Future<List<Map<String, dynamic>>> getStaff() async {
     final data = await _api.getJson('/api/staff/');
+
+    // Handle paginated response
+    if (data is Map && data.containsKey('results')) {
+      return (data['results'] as List).cast<Map<String, dynamic>>();
+    }
+
+    // Fallback for non-paginated response
     return (data as List).cast<Map<String, dynamic>>();
   }
 
