@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../state/app_state.dart';
@@ -67,6 +68,7 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
   }
 
   void _showCreateDialog([Map<String, dynamic>? existingData]) {
+    final l10n = AppLocalizations.of(context)!;
     final isEdit = existingData != null;
     final nameController = TextEditingController(text: existingData?['name']);
     final codeController = TextEditingController(text: existingData?['code']);
@@ -78,15 +80,12 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
 
     // Storage Types
     final storageTypes = [
-      {'value': 'silo', 'label': 'Silos'},
-      {'value': 'warehouse', 'label': 'Warehouses'},
-      {'value': 'cold_storage', 'label': 'Cold Storages'},
-      {'value': 'frozen_storage', 'label': 'Frozen Storages'},
-      {'value': 'ripening_chamber', 'label': 'Ripening Chambers'},
-      {
-        'value': 'controlled_atmosphere',
-        'label': 'Controlled Atmosphere Storage'
-      },
+      {'value': 'silo', 'label': l10n.silos},
+      {'value': 'warehouse', 'label': l10n.warehouses},
+      {'value': 'cold_storage', 'label': l10n.coldStorages},
+      {'value': 'frozen_storage', 'label': l10n.frozenStorages},
+      {'value': 'ripening_chamber', 'label': l10n.ripeningChambers},
+      {'value': 'controlled_atmosphere', 'label': l10n.controlledAtmosphere},
     ];
 
     String selectedType = existingData?['storage_type'] ?? 'cold_storage';
@@ -112,7 +111,7 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
                     color: Color(0xFF1976D2), size: 20),
               ),
               const SizedBox(width: 12),
-              Text(isEdit ? 'Edit Storage' : 'Add Storage'),
+              Text(isEdit ? l10n.editStorage : l10n.addStorage),
             ],
           ),
           content: SingleChildScrollView(
@@ -120,9 +119,9 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Storage Type',
-                    style:
-                        TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                Text(l10n.storageType,
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w500)),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
                   value: selectedType,
@@ -145,51 +144,51 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
                   },
                 ),
                 const SizedBox(height: 16),
-                const Text('Name *',
-                    style:
-                        TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                Text(l10n.nameRequired,
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w500)),
                 const SizedBox(height: 8),
                 TextField(
                   controller: nameController,
                   decoration: InputDecoration(
-                    hintText: 'e.g. Storage Main',
+                    hintText: l10n.storageNameHint,
                     prefixIcon: const Icon(Icons.business),
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8)),
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text('Code *',
-                    style:
-                        TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                Text(l10n.codeRequired,
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w500)),
                 const SizedBox(height: 8),
                 TextField(
                   controller: codeController,
                   decoration: InputDecoration(
-                    hintText: 'e.g. STR1',
+                    hintText: l10n.codeHint,
                     prefixIcon: const Icon(Icons.tag),
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8)),
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text('City',
-                    style:
-                        TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                Text(l10n.city,
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w500)),
                 const SizedBox(height: 8),
                 TextField(
                   controller: cityController,
                   decoration: InputDecoration(
-                    hintText: 'e.g. Nashik',
+                    hintText: l10n.cityHint,
                     prefixIcon: const Icon(Icons.location_city),
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8)),
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text('Total Capacity (MT)',
-                    style:
-                        TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                Text(l10n.totalCapacityMT,
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w500)),
                 const SizedBox(height: 8),
                 TextField(
                   controller: capacityController,
@@ -203,23 +202,23 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
                 ),
                 if (!isEdit) ...[
                   const SizedBox(height: 16),
-                  const Text('Rooms *',
-                      style:
-                          TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                  Text(l10n.roomsRequired,
+                      style: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w500)),
                   const SizedBox(height: 4),
                   Text(
-                    'Add at least one room for this storage',
+                    l10n.addAtLeastOneRoom,
                     style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: roomsController,
                     decoration: InputDecoration(
-                      hintText: 'e.g. Room A, Room B, Room C (comma separated)',
+                      hintText: l10n.roomsHint,
                       prefixIcon: const Icon(Icons.meeting_room),
                       border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8)),
-                      helperText: 'Separate multiple rooms with commas',
+                      helperText: l10n.separateWithCommas,
                       helperStyle:
                           TextStyle(fontSize: 11, color: Colors.grey[600]),
                     ),
@@ -241,26 +240,25 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
                         Navigator.pop(context);
                         _loadColdStorages();
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Storage deleted')),
+                          SnackBar(content: Text(l10n.storageDeleted)),
                         );
                       } catch (e) {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Error: $e')),
+                            SnackBar(content: Text('${l10n.error}: $e')),
                           );
                         }
                       }
                     },
                     style: TextButton.styleFrom(foregroundColor: Colors.red),
-                    child: const Text('Delete'),
+                    child: Text(l10n.delete),
                   ),
                   ElevatedButton(
                     onPressed: () async {
                       if (nameController.text.isEmpty ||
                           codeController.text.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('Name and Code are required')),
+                          SnackBar(content: Text(l10n.nameCodeRequired)),
                         );
                         return;
                       }
@@ -284,35 +282,33 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
                           Navigator.pop(context);
                           _loadColdStorages();
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('Storage updated successfully')),
+                            SnackBar(content: Text(l10n.storageUpdatedSuccess)),
                           );
                         }
                       } catch (e) {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Error: $e')),
+                            SnackBar(content: Text('${l10n.error}: $e')),
                           );
                         }
                       }
                     },
                     style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF1976D2)),
-                    child: const Text('Update'),
+                    child: Text(l10n.update),
                   ),
                 ]
               : [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel'),
+                    child: Text(l10n.cancel),
                   ),
                   ElevatedButton(
                     onPressed: () async {
                       if (nameController.text.isEmpty ||
                           codeController.text.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('Name and Code are required')),
+                          SnackBar(content: Text(l10n.nameCodeRequired)),
                         );
                         return;
                       }
@@ -320,8 +316,7 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
                       // Validate rooms are provided
                       if (roomsController.text.trim().isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('At least one room is required')),
+                          SnackBar(content: Text(l10n.atLeastOneRoomRequired)),
                         );
                         return;
                       }
@@ -351,21 +346,20 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
                           Navigator.pop(context);
                           _loadColdStorages();
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('Storage created successfully')),
+                            SnackBar(content: Text(l10n.storageCreatedSuccess)),
                           );
                         }
                       } catch (e) {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Error: $e')),
+                            SnackBar(content: Text('${l10n.error}: $e')),
                           );
                         }
                       }
                     },
                     style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF1976D2)),
-                    child: const Text('Create'),
+                    child: Text(l10n.create),
                   ),
                 ],
         ),
@@ -420,6 +414,7 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
   }
 
   void _showAssignManagerDialog(Map<String, dynamic> coldStorage) async {
+    final l10n = AppLocalizations.of(context)!;
     // Fetch available managers
     List<Map<String, dynamic>> managers = [];
 
@@ -451,17 +446,18 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Assign Manager'),
+          title: Text(l10n.assignManager),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Cold Storage: ${coldStorage['display_name'] ?? coldStorage['name']}',
+                l10n.coldStorageLabel(
+                    coldStorage['display_name'] ?? coldStorage['name']),
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 16),
-              const Text('Select Manager:', style: TextStyle(fontSize: 14)),
+              Text(l10n.selectManager, style: const TextStyle(fontSize: 14)),
               const SizedBox(height: 8),
               DropdownButtonFormField<int?>(
                 value: selectedManagerId,
@@ -472,8 +468,7 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                 ),
                 items: [
-                  const DropdownMenuItem(
-                      value: null, child: Text('No Manager')),
+                  DropdownMenuItem(value: null, child: Text(l10n.noManager)),
                   ...managers.map((m) {
                     return DropdownMenuItem(
                       value: m['id'] as int,
@@ -490,7 +485,7 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: Text(l10n.cancel),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -503,18 +498,17 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
                   Navigator.pop(context);
                   _loadColdStorages();
                   ScaffoldMessenger.of(this.context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Manager assigned successfully')),
+                    SnackBar(content: Text(l10n.managerAssignedSuccess)),
                   );
                 } catch (e) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $e')),
+                    SnackBar(content: Text('${l10n.error}: $e')),
                   );
                 }
               },
               style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1976D2)),
-              child: const Text('Assign'),
+              child: Text(l10n.assign),
             ),
           ],
         ),
@@ -524,6 +518,7 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
@@ -553,21 +548,21 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
                         color: Colors.white, size: 24),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Storages',
-                          style: TextStyle(
+                          l10n.storages,
+                          style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
                         ),
                         Text(
-                          'Manage your facilities',
-                          style: TextStyle(
+                          l10n.manageYourFacilities,
+                          style: const TextStyle(
                             fontSize: 14,
                             color: Colors.white70,
                           ),
@@ -588,8 +583,8 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
-                    child: const Text('Logout',
-                        style: TextStyle(fontWeight: FontWeight.w600)),
+                    child: Text(l10n.logout,
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
                   ),
                 ],
               ),
@@ -610,7 +605,7 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
                             child: ElevatedButton.icon(
                               onPressed: _showCreateDialog,
                               icon: const Icon(Icons.add_business, size: 20),
-                              label: const Text('Add New Storage'),
+                              label: Text(l10n.addNewStorage),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF4CAF50),
                                 foregroundColor: Colors.white,
@@ -627,7 +622,7 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
 
                           // Cold Storages List
                           Text(
-                            'Your Storages (${_coldStorages.length})',
+                            l10n.yourStoragesCount(_coldStorages.length),
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -651,7 +646,7 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
                                       size: 48, color: Colors.grey[400]),
                                   const SizedBox(height: 12),
                                   Text(
-                                    'No storages yet',
+                                    l10n.noStoragesYet,
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
@@ -660,7 +655,7 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'Add your first storage facility',
+                                    l10n.addFirstStorage,
                                     style: TextStyle(
                                       fontSize: 14,
                                       color: Colors.grey[500],
@@ -683,6 +678,7 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
   }
 
   Widget _buildColdStorageCard(Map<String, dynamic> cs) {
+    final l10n = AppLocalizations.of(context)!;
     final utilization = _toDouble(cs['utilization_percent']);
     final occupied = _toDouble(cs['occupied_capacity']);
     final total = _toDouble(cs['total_capacity']);
@@ -762,7 +758,7 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    isActive ? 'Active' : 'Inactive',
+                    isActive ? l10n.active : l10n.inactive,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -786,7 +782,7 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Capacity Usage',
+                        Text(l10n.capacityUsage,
                             style: TextStyle(
                                 color: Colors.grey[600], fontSize: 13)),
                         Text('${utilization.toStringAsFixed(0)}%',
@@ -816,10 +812,10 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('${occupied.toStringAsFixed(0)} MT used',
+                        Text(l10n.mtUsed(occupied.toStringAsFixed(0)),
                             style: TextStyle(
                                 fontSize: 12, color: Colors.grey[500])),
-                        Text('${total.toStringAsFixed(0)} MT total',
+                        Text(l10n.mtTotal(total.toStringAsFixed(0)),
                             style: TextStyle(
                                 fontSize: 12, color: Colors.grey[500])),
                       ],
@@ -835,12 +831,12 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
                     Icon(Icons.person, size: 18, color: Colors.grey[500]),
                     const SizedBox(width: 8),
                     Text(
-                      'Manager: ',
+                      l10n.managerLabel,
                       style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                     ),
                     Expanded(
                       child: Text(
-                        managerName ?? 'Not Assigned',
+                        managerName ?? l10n.notAssigned,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -852,7 +848,8 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
                     ),
                     TextButton(
                       onPressed: () => _showAssignManagerDialog(cs),
-                      child: Text(managerName != null ? 'Change' : 'Assign'),
+                      child:
+                          Text(managerName != null ? l10n.change : l10n.assign),
                     ),
                   ],
                 ),
@@ -866,7 +863,7 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
                       child: OutlinedButton.icon(
                         onPressed: () => _showDetailsDialog(cs),
                         icon: const Icon(Icons.visibility, size: 18),
-                        label: const Text('View'),
+                        label: Text(l10n.view),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFF1976D2),
                           side: const BorderSide(color: Color(0xFF1976D2)),
@@ -879,7 +876,7 @@ class _OwnerColdStoragesTabState extends State<OwnerColdStoragesTab> {
                       child: OutlinedButton.icon(
                         onPressed: () => _showCreateDialog(cs),
                         icon: const Icon(Icons.edit, size: 18),
-                        label: const Text('Edit'),
+                        label: Text(l10n.edit),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFF4CAF50),
                           side: const BorderSide(color: Color(0xFF4CAF50)),

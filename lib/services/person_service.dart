@@ -12,8 +12,20 @@ class PersonService {
 
   /// Search persons by query
   Future<List<Map<String, dynamic>>> searchPersons(String query) async {
-    final response = await _client.getJson('/api/inventory/persons/', query: {'search': query});
-    return List<Map<String, dynamic>>.from(response);
+    final response = await _client
+        .getJson('/api/inventory/persons/', query: {'search': query});
+
+    // Handle paginated response from Django REST Framework
+    if (response is Map<String, dynamic> && response.containsKey('results')) {
+      return List<Map<String, dynamic>>.from(response['results'] ?? []);
+    }
+
+    // Fallback for non-paginated response (list)
+    if (response is List) {
+      return List<Map<String, dynamic>>.from(response);
+    }
+
+    return [];
   }
 
   /// Get person by ID

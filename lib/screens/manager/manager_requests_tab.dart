@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../state/app_state.dart';
 
 class ManagerRequestsTab extends StatelessWidget {
@@ -8,6 +9,7 @@ class ManagerRequestsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
@@ -29,15 +31,16 @@ class ManagerRequestsTab extends StatelessWidget {
                       color: Colors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.description, color: Colors.white, size: 24),
+                    child: const Icon(Icons.description,
+                        color: Colors.white, size: 24),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Booking Requests',
+                          l10n.bookingRequests,
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -45,7 +48,7 @@ class ManagerRequestsTab extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          'Manage storage requests',
+                          l10n.manageStorageRequests,
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.white70,
@@ -61,12 +64,14 @@ class ManagerRequestsTab extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
                       foregroundColor: const Color(0xFF1976D2),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
-                    child: const Text('Logout', style: TextStyle(fontWeight: FontWeight.w600)),
+                    child: Text(l10n.logout,
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
                   ),
                 ],
               ),
@@ -92,9 +97,9 @@ class ManagerRequestsTab extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    const Text(
-                      'Under Development',
-                      style: TextStyle(
+                    Text(
+                      l10n.underDevelopment,
+                      style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF333333),
@@ -102,7 +107,7 @@ class ManagerRequestsTab extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'This feature is coming soon!\nBooking requests and approvals will be available here.',
+                      l10n.featureComingSoon,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 16,
@@ -112,7 +117,8 @@ class ManagerRequestsTab extends StatelessWidget {
                     ),
                     const SizedBox(height: 32),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
                       decoration: BoxDecoration(
                         color: const Color(0xFFFFF3E0),
                         borderRadius: BorderRadius.circular(8),
@@ -121,10 +127,11 @@ class ManagerRequestsTab extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.info_outline, color: Color(0xFFFF9800), size: 20),
+                          const Icon(Icons.info_outline,
+                              color: Color(0xFFFF9800), size: 20),
                           const SizedBox(width: 8),
                           Text(
-                            'Version 2.0 Feature',
+                            l10n.versionFeature,
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,

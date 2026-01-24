@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../state/app_state.dart';
 import 'manager_dashboard_tab.dart';
 import 'manager_inventory_tab.dart';
@@ -25,6 +26,7 @@ class _ManagerDashboardScreenState extends State<ManagerDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final tabs = <Widget>[
       ManagerDashboardTab(onNavigateToTab: _navigateToTab),
       const ManagerRequestsTab(),
@@ -59,36 +61,36 @@ class _ManagerDashboardScreenState extends State<ManagerDashboardScreen> {
           unselectedItemColor: const Color(0xFF9E9E9E),
           selectedFontSize: 11,
           unselectedFontSize: 11,
-          items: const [
+          items: [
             BottomNavigationBarItem(
               icon: Icon(Icons.dashboard_outlined),
               activeIcon: Icon(Icons.dashboard),
-              label: 'Dashboard',
+              label: l10n.dashboard,
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.description_outlined),
               activeIcon: Icon(Icons.description),
-              label: 'Requests',
+              label: l10n.requests,
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.inventory_2_outlined),
               activeIcon: Icon(Icons.inventory_2),
-              label: 'Inventory',
+              label: l10n.inventory,
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.people_outline),
               activeIcon: Icon(Icons.people),
-              label: 'Staff',
+              label: l10n.staff,
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.thermostat_outlined),
               activeIcon: Icon(Icons.thermostat),
-              label: 'Rooms',
+              label: l10n.rooms,
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.warning_amber_outlined),
               activeIcon: Icon(Icons.warning_amber),
-              label: 'Alerts',
+              label: l10n.alerts,
             ),
           ],
         ),

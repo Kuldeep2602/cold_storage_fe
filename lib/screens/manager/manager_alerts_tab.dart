@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../state/app_state.dart';
 
 class ManagerAlertsTab extends StatefulWidget {
@@ -58,8 +59,9 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
           _isLoading = false;
         });
         debugPrint('Error loading alerts: $e');
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading alerts: $e')),
+          SnackBar(content: Text(l10n.errorLoadingAlerts(e.toString()))),
         );
       }
     }
@@ -74,14 +76,16 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
       });
       _loadAlerts();
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Alert ${action}d successfully')),
+          SnackBar(content: Text(l10n.alertActionSuccess(action))),
         );
       }
     } catch (e) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+          SnackBar(content: Text(l10n.errorMessage(e.toString()))),
         );
       }
     }
@@ -89,6 +93,7 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
@@ -118,16 +123,16 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Temperature Alerts',
-                          style: TextStyle(
+                        Text(
+                          l10n.temperatureAlerts,
+                          style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
                         ),
                         Text(
-                          '${_activeAlerts.length} active alerts',
+                          l10n.activeAlertsCount(_activeAlerts.length),
                           style: const TextStyle(
                             fontSize: 14,
                             color: Colors.white70,
@@ -149,8 +154,8 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
-                    child: const Text('Logout',
-                        style: TextStyle(fontWeight: FontWeight.w600)),
+                    child: Text(l10n.logout,
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
                   ),
                 ],
               ),
@@ -172,9 +177,9 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
                                 const Icon(Icons.warning,
                                     color: Color(0xFFF44336), size: 20),
                                 const SizedBox(width: 8),
-                                const Text(
-                                  'Active Alerts',
-                                  style: TextStyle(
+                                Text(
+                                  l10n.activeAlerts,
+                                  style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                     color: Color(0xFFF44336),
@@ -206,9 +211,9 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
                                     ),
                                   ),
                                   const SizedBox(height: 16),
-                                  const Text(
-                                    'All Clear!',
-                                    style: TextStyle(
+                                  Text(
+                                    l10n.allClear,
+                                    style: const TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.bold,
                                       color: Color(0xFF4CAF50),
@@ -216,7 +221,7 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    'No active temperature alerts',
+                                    l10n.noActiveAlerts,
                                     style: TextStyle(
                                       fontSize: 14,
                                       color: Colors.grey[600],
@@ -235,9 +240,9 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
                                 const Icon(Icons.check_circle,
                                     color: Color(0xFF4CAF50), size: 20),
                                 const SizedBox(width: 8),
-                                const Text(
-                                  'Normal Status',
-                                  style: TextStyle(
+                                Text(
+                                  l10n.normalStatus,
+                                  style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                     color: Color(0xFF4CAF50),
@@ -260,6 +265,7 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
   }
 
   Widget _buildAlertCard(Map<String, dynamic> alert) {
+    final l10n = AppLocalizations.of(context)!;
     final severity = alert['severity']?.toString().toLowerCase() ?? 'medium';
     final isHigh = severity == 'high' || severity == 'critical';
 
@@ -309,7 +315,7 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            alert['room_name'] ?? 'Unknown Room',
+                            alert['room_name'] ?? l10n.unknownRoom,
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -368,7 +374,7 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Current Temp',
+                              l10n.currentTemp,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.grey[600],
@@ -406,7 +412,7 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Allowed Range',
+                              l10n.allowedRange,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.grey[600],
@@ -414,7 +420,8 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              '${alert['room_min_temp']}°C to ${alert['room_max_temp']}°C',
+                              l10n.tempRange(alert['room_min_temp'],
+                                  alert['room_max_temp']),
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
@@ -444,10 +451,10 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
                   bottomRight: Radius.circular(16),
                 ),
               ),
-              child: const Center(
+              child: Center(
                 child: Text(
-                  'Take Action',
-                  style: TextStyle(
+                  l10n.takeAction,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -462,6 +469,7 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
   }
 
   Widget _buildNormalRoomCard(Map<String, dynamic> room) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -495,7 +503,7 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  room['name'] ?? 'Unknown Room',
+                  room['name'] ?? l10n.unknownRoom,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -525,7 +533,7 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
                 ),
               ),
               Text(
-                'Within range',
+                l10n.withinRange,
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.green[600],
@@ -539,17 +547,18 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
   }
 
   void _showActionDialog(Map<String, dynamic> alert) {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Take Action - ${alert['room_name']}'),
+        title: Text(l10n.actionTaken(alert['room_name'])),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
               leading: const Icon(Icons.visibility, color: Color(0xFF1976D2)),
-              title: const Text('Acknowledge'),
-              subtitle: const Text('Mark as seen'),
+              title: Text(l10n.acknowledge),
+              subtitle: Text(l10n.markAsSeen),
               onTap: () {
                 Navigator.pop(context);
                 _takeAction(alert['id'] as int, 'acknowledge');
@@ -557,8 +566,8 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
             ),
             ListTile(
               leading: const Icon(Icons.check_circle, color: Color(0xFF4CAF50)),
-              title: const Text('Resolve'),
-              subtitle: const Text('Issue has been fixed'),
+              title: Text(l10n.resolve),
+              subtitle: Text(l10n.issueFixed),
               onTap: () {
                 Navigator.pop(context);
                 _takeAction(alert['id'] as int, 'resolve');
@@ -569,7 +578,7 @@ class _ManagerAlertsTabState extends State<ManagerAlertsTab> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
         ],
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../state/app_state.dart';
 
 class ManagerRoomSettingsTab extends StatefulWidget {
@@ -24,21 +25,41 @@ class _ManagerRoomSettingsTabState extends State<ManagerRoomSettingsTab> {
     setState(() => _isLoading = true);
     try {
       final appState = context.read<AppState>();
-      // Load rooms from API
+
+      // First, get manager's assigned cold storages to filter rooms
+      final dashboardData =
+          await appState.client.getJson('/api/inventory/manager-dashboard/');
+      final assignedStorages = (dashboardData['cold_storages'] as List?)
+              ?.cast<Map<String, dynamic>>() ??
+          [];
+
+      // Get the IDs of assigned storages
+      final assignedStorageIds = assignedStorages
+          .map((storage) => storage['id'] as int?)
+          .where((id) => id != null)
+          .toSet();
+
+      // Load all rooms from API
       final data = await appState.client.getJson('/api/inventory/rooms/');
 
-      List<Map<String, dynamic>> rooms;
+      List<Map<String, dynamic>> allRooms;
       if (data is Map && data.containsKey('results')) {
-        rooms = (data['results'] as List).cast<Map<String, dynamic>>();
+        allRooms = (data['results'] as List).cast<Map<String, dynamic>>();
       } else if (data is List) {
-        rooms = data.cast<Map<String, dynamic>>();
+        allRooms = data.cast<Map<String, dynamic>>();
       } else {
-        rooms = [];
+        allRooms = [];
       }
+
+      // Filter rooms to only show those belonging to assigned storages
+      final filteredRooms = allRooms.where((room) {
+        final storageId = room['cold_storage'] as int?;
+        return storageId != null && assignedStorageIds.contains(storageId);
+      }).toList();
 
       if (mounted) {
         setState(() {
-          _rooms = rooms;
+          _rooms = filteredRooms;
           _isLoading = false;
         });
       }
@@ -46,8 +67,9 @@ class _ManagerRoomSettingsTabState extends State<ManagerRoomSettingsTab> {
       if (mounted) {
         setState(() => _isLoading = false);
         debugPrint('Error loading rooms: $e');
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading rooms: $e')),
+          SnackBar(content: Text(l10n.errorLoadingAlerts(e.toString()))),
         );
       }
     }
@@ -65,8 +87,9 @@ class _ManagerRoomSettingsTabState extends State<ManagerRoomSettingsTab> {
 
     if (coldStorages.isEmpty) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No storages assigned to you')),
+          SnackBar(content: Text(l10n.noStoragesAssigned)),
         );
       }
       return;
@@ -80,148 +103,158 @@ class _ManagerRoomSettingsTabState extends State<ManagerRoomSettingsTab> {
 
     final result = await showDialog<bool>(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Add New Room'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Cold Storage *',
-                    style:
-                        TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<int>(
-                  value: selectedStorageId,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8)),
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 14),
+      builder: (dialogContext) {
+        final l10n = AppLocalizations.of(dialogContext)!;
+        return StatefulBuilder(
+          builder: (context, setDialogState) => AlertDialog(
+            title: Text(l10n.addNewRoom),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(l10n.coldStorageRequired,
+                      style: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<int>(
+                    value: selectedStorageId,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 14),
+                    ),
+                    items: coldStorages.map((cs) {
+                      return DropdownMenuItem<int>(
+                        value: cs['id'] as int,
+                        child: Text(cs['display_name'] ?? cs['name'] ?? ''),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setDialogState(() => selectedStorageId = value);
+                    },
                   ),
-                  items: coldStorages.map((cs) {
-                    return DropdownMenuItem<int>(
-                      value: cs['id'] as int,
-                      child: Text(cs['display_name'] ?? cs['name'] ?? ''),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setDialogState(() => selectedStorageId = value);
-                  },
-                ),
-                const SizedBox(height: 16),
-                const Text('Room Name *',
-                    style:
-                        TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: roomNameController,
-                  decoration: InputDecoration(
-                    hintText: 'e.g. Room A',
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                  const SizedBox(height: 16),
+                  Text(l10n.roomNameRequired,
+                      style: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: roomNameController,
+                    decoration: InputDecoration(
+                      hintText: l10n.roomNameHint,
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                const Text('Capacity (MT)',
-                    style:
-                        TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: capacityController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    hintText: '100',
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                  const SizedBox(height: 16),
+                  Text(l10n.capacityMT,
+                      style: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: capacityController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      hintText: l10n.capacityPlaceholder,
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                const Text('Min Temperature (°C)',
-                    style:
-                        TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: minTempController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true, signed: true),
-                  decoration: InputDecoration(
-                    hintText: '-5',
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                  const SizedBox(height: 16),
+                  Text(l10n.minTemperature,
+                      style: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: minTempController,
+                    keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true, signed: true),
+                    decoration: InputDecoration(
+                      hintText: l10n.minTempPlaceholder,
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                const Text('Max Temperature (°C)',
-                    style:
-                        TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: maxTempController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true, signed: true),
-                  decoration: InputDecoration(
-                    hintText: '0',
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                  const SizedBox(height: 16),
+                  Text(l10n.maxTemperature,
+                      style: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: maxTempController,
+                    keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true, signed: true),
+                    decoration: InputDecoration(
+                      hintText: l10n.maxTempPlaceholder,
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (roomNameController.text.trim().isEmpty ||
-                    selectedStorageId == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Room name and storage are required')),
-                  );
-                  return;
-                }
-
-                try {
-                  final body = {
-                    'cold_storage': selectedStorageId,
-                    'room_name': roomNameController.text.trim(),
-                    'capacity': double.tryParse(capacityController.text) ?? 100,
-                    'min_temperature':
-                        double.tryParse(minTempController.text) ?? -5,
-                    'max_temperature':
-                        double.tryParse(maxTempController.text) ?? 0,
-                  };
-
-                  await appState.client.postJson('/api/inventory/rooms/', body);
-
-                  if (context.mounted) {
-                    Navigator.pop(context, true);
-                  }
-                } catch (e) {
-                  if (context.mounted) {
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(l10n.cancel),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final l10n = AppLocalizations.of(context)!;
+                  if (roomNameController.text.trim().isEmpty ||
+                      selectedStorageId == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error: $e')),
+                      SnackBar(content: Text(l10n.roomNameStorageRequired)),
                     );
+                    return;
                   }
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1976D2)),
-              child: const Text('Add Room'),
-            ),
-          ],
-        ),
-      ),
+
+                  try {
+                    final body = {
+                      'cold_storage': selectedStorageId,
+                      'room_name': roomNameController.text.trim(),
+                      'capacity':
+                          double.tryParse(capacityController.text) ?? 100,
+                      'min_temperature':
+                          double.tryParse(minTempController.text) ?? -5,
+                      'max_temperature':
+                          double.tryParse(maxTempController.text) ?? 0,
+                    };
+
+                    debugPrint('Creating room with data: $body');
+                    final response = await appState.client
+                        .postJson('/api/inventory/rooms/', body);
+                    debugPrint('Room created successfully: $response');
+
+                    if (context.mounted) {
+                      Navigator.pop(context, true);
+                    }
+                  } catch (e) {
+                    debugPrint('Error creating room: $e');
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content: Text(l10n.errorMessage(e.toString()))),
+                      );
+                    }
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1976D2)),
+                child: Text(l10n.addRoom),
+              ),
+            ],
+          ),
+        );
+      },
     );
 
     if (result == true && mounted) {
+      final l10n = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Room added successfully')),
+        SnackBar(content: Text(l10n.roomAddedSuccess)),
       );
       _loadRooms();
     }
@@ -237,142 +270,146 @@ class _ManagerRoomSettingsTabState extends State<ManagerRoomSettingsTab> {
 
     final result = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Set Temperature Range'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                room['room_name'] as String,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                room['cold_storage_name'] as String,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Minimum Temperature (°C)',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: minController,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                  signed: true,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'e.g., -5',
-                  suffixText: '°C',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+      builder: (dialogContext) {
+        final l10n = AppLocalizations.of(dialogContext)!;
+        return AlertDialog(
+          title: Text(l10n.setTemperatureRange),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  room['room_name'] as String,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Maximum Temperature (°C)',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: maxController,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                  signed: true,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'e.g., 0',
-                  suffixText: '°C',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+                Text(
+                  room['cold_storage_name'] as String,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(8),
+                const SizedBox(height: 24),
+                Text(
+                  l10n.minimumTemperature,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
-                child: Row(
-                  children: [
-                    Icon(Icons.info_outline,
-                        color: Colors.blue.shade700, size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Alerts will be created when temperature goes outside this range',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.blue.shade700,
+                const SizedBox(height: 8),
+                TextField(
+                  controller: minController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                    signed: true,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: l10n.minTempExample,
+                    suffixText: '°C',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.maximumTemperature,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: maxController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                    signed: true,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: l10n.maxTempExample,
+                    suffixText: '°C',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline,
+                          color: Colors.blue.shade700, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          l10n.temperatureAlertInfo,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.blue.shade700,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              try {
-                final minTemp = double.parse(minController.text);
-                final maxTemp = double.parse(maxController.text);
-
-                if (minTemp >= maxTemp) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Minimum must be less than maximum'),
-                    ),
-                  );
-                  return;
-                }
-
-                final appState = context.read<AppState>();
-                await appState.client.patchJson(
-                  '/api/inventory/rooms/${room['id']}/',
-                  {
-                    'min_temperature': minTemp,
-                    'max_temperature': maxTemp,
-                  },
-                );
-
-                Navigator.pop(context, true);
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Error: $e')),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1976D2),
+              ],
             ),
-            child: const Text('Save'),
           ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(l10n.cancel),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                try {
+                  final minTemp = double.parse(minController.text);
+                  final maxTemp = double.parse(maxController.text);
+
+                  if (minTemp >= maxTemp) {
+                    ScaffoldMessenger.of(dialogContext).showSnackBar(
+                      SnackBar(
+                        content: Text(l10n.minLessThanMax),
+                      ),
+                    );
+                    return;
+                  }
+
+                  final appState = context.read<AppState>();
+                  await appState.client.patchJson(
+                    '/api/inventory/rooms/${room['id']}/',
+                    {
+                      'min_temperature': minTemp,
+                      'max_temperature': maxTemp,
+                    },
+                  );
+
+                  Navigator.pop(dialogContext, true);
+                } catch (e) {
+                  ScaffoldMessenger.of(dialogContext).showSnackBar(
+                    SnackBar(content: Text(l10n.errorMessage(e.toString()))),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1976D2),
+              ),
+              child: Text(l10n.save),
+            ),
+          ],
+        );
+      },
     );
 
     if (result == true) {
+      final l10n = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Temperature range updated successfully')),
+        SnackBar(content: Text(l10n.temperatureRangeUpdated)),
       );
       _loadRooms();
     }
@@ -380,6 +417,7 @@ class _ManagerRoomSettingsTabState extends State<ManagerRoomSettingsTab> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
@@ -409,16 +447,16 @@ class _ManagerRoomSettingsTabState extends State<ManagerRoomSettingsTab> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Room Temperature Settings',
-                          style: TextStyle(
+                        Text(
+                          l10n.roomTemperatureSettings,
+                          style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
                         ),
                         Text(
-                          '${_rooms.length} rooms',
+                          l10n.roomsCount(_rooms.length),
                           style: const TextStyle(
                             fontSize: 14,
                             color: Colors.white70,
@@ -440,8 +478,8 @@ class _ManagerRoomSettingsTabState extends State<ManagerRoomSettingsTab> {
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
-                    child: const Text('Logout',
-                        style: TextStyle(fontWeight: FontWeight.w600)),
+                    child: Text(l10n.logout,
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
                   ),
                 ],
               ),
@@ -460,7 +498,7 @@ class _ManagerRoomSettingsTabState extends State<ManagerRoomSettingsTab> {
                                   size: 80, color: Colors.grey[400]),
                               const SizedBox(height: 16),
                               Text(
-                                'No rooms found',
+                                l10n.noRoomsFound,
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -489,12 +527,13 @@ class _ManagerRoomSettingsTabState extends State<ManagerRoomSettingsTab> {
         onPressed: _showAddRoomDialog,
         backgroundColor: const Color(0xFF1976D2),
         icon: const Icon(Icons.add),
-        label: const Text('Add Room'),
+        label: Text(l10n.addRoom),
       ),
     );
   }
 
   Widget _buildRoomCard(Map<String, dynamic> room) {
+    final l10n = AppLocalizations.of(context)!;
     final minTemp = room['min_temperature'] ?? -5.0;
     final maxTemp = room['max_temperature'] ?? 0.0;
 
@@ -564,7 +603,7 @@ class _ManagerRoomSettingsTabState extends State<ManagerRoomSettingsTab> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Allowed Range',
+                      l10n.allowedRange,
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey[600],
@@ -587,10 +626,10 @@ class _ManagerRoomSettingsTabState extends State<ManagerRoomSettingsTab> {
                   bottomRight: Radius.circular(12),
                 ),
               ),
-              child: const Center(
+              child: Center(
                 child: Text(
-                  'Edit Temperature Range',
-                  style: TextStyle(
+                  l10n.editTemperatureRange,
+                  style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: Colors.white,

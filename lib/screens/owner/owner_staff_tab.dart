@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../state/app_state.dart';
@@ -65,18 +66,22 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
   }
 
   Future<void> _openAddStaffDialog() async {
+    final l10n = AppLocalizations.of(context)!;
     List<Map<String, dynamic>> storages = [];
     try {
       final appState = context.read<AppState>();
-      final data = await appState.client.getJson('/api/inventory/cold-storages/');
+      final data =
+          await appState.client.getJson('/api/inventory/cold-storages/');
       final list = data is List
           ? data
-          : (data is Map && data['results'] is List ? data['results'] : const []);
+          : (data is Map && data['results'] is List
+              ? data['results']
+              : const []);
       storages = list.cast<Map<String, dynamic>>();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading storages: $e')),
+          SnackBar(content: Text(l10n.errorLoadingStorages)),
         );
       }
       return;
@@ -85,7 +90,8 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
     final phoneController = TextEditingController();
     final nameController = TextEditingController();
     String selectedRole = 'manager';
-    final Set<int> _selectedStorageIds = storages.map((s) => (s['id'] as num).toInt()).toSet();
+    final Set<int> _selectedStorageIds =
+        storages.map((s) => (s['id'] as num).toInt()).toSet();
 
     showDialog(
       context: context,
@@ -104,7 +110,7 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
                     color: Color(0xFF1976D2), size: 20),
               ),
               const SizedBox(width: 12),
-              const Text('Add Staff Member'),
+              Text(l10n.addStaffMember),
             ],
           ),
           content: SingleChildScrollView(
@@ -112,16 +118,17 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Phone Number *',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                Text(
+                  l10n.phoneNumberRequired,
+                  style: const TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: phoneController,
                   keyboardType: TextInputType.phone,
                   decoration: InputDecoration(
-                    hintText: '+91 ',
+                    hintText: l10n.phoneHint,
                     prefixIcon: const Icon(Icons.phone),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -129,15 +136,16 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  'Name *',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                Text(
+                  l10n.nameRequired,
+                  style: const TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: nameController,
                   decoration: InputDecoration(
-                    hintText: 'Enter name',
+                    hintText: l10n.enterName,
                     prefixIcon: const Icon(Icons.person),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -145,9 +153,10 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  'Role *',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                Text(
+                  l10n.roleRequired,
+                  style: const TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 8),
 
@@ -156,8 +165,8 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
                   setDialogState: setDialogState,
                   currentRole: selectedRole,
                   role: 'manager',
-                  title: 'Manager',
-                  subtitle: 'Full access to manage storages, staff & inventory',
+                  title: l10n.manager,
+                  subtitle: l10n.fullAccessDescription,
                   icon: Icons.admin_panel_settings,
                   color: const Color(0xFF1976D2),
                   onSelect: () =>
@@ -168,8 +177,8 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
                   setDialogState: setDialogState,
                   currentRole: selectedRole,
                   role: 'operator',
-                  title: 'Operator',
-                  subtitle: 'Inward/Outward operations only',
+                  title: l10n.operator,
+                  subtitle: l10n.inwardOutwardOnly,
                   icon: Icons.work,
                   color: const Color(0xFF4CAF50),
                   onSelect: () =>
@@ -180,8 +189,8 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
                   setDialogState: setDialogState,
                   currentRole: selectedRole,
                   role: 'technician',
-                  title: 'Technician',
-                  subtitle: 'Temperature monitoring & alerts',
+                  title: l10n.technician,
+                  subtitle: l10n.tempMonitoringAlerts,
                   icon: Icons.thermostat,
                   color: const Color(0xFFFF9800),
                   onSelect: () =>
@@ -190,9 +199,10 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
 
                 if (storages.isNotEmpty) ...[
                   const SizedBox(height: 16),
-                  const Text(
-                    'Assign Storages',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                  Text(
+                    l10n.assignStorages,
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 8),
                   Container(
@@ -204,7 +214,9 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
                       children: storages.map((storage) {
                         final sid = (storage['id'] as num).toInt();
                         return CheckboxListTile(
-                          title: Text(storage['display_name']?.toString() ?? storage['name']?.toString() ?? ''),
+                          title: Text(storage['display_name']?.toString() ??
+                              storage['name']?.toString() ??
+                              ''),
                           subtitle: Text(storage['code']?.toString() ?? ''),
                           value: _selectedStorageIds.contains(sid),
                           onChanged: (val) {
@@ -229,15 +241,14 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: Text(l10n.cancel),
             ),
             ElevatedButton(
               onPressed: () async {
                 if (phoneController.text.isEmpty ||
                     nameController.text.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Phone number and name are required')),
+                    SnackBar(content: Text(l10n.phoneNameRequired)),
                   );
                   return;
                 }
@@ -253,19 +264,18 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
                   Navigator.pop(context);
                   _loadStaff();
                   ScaffoldMessenger.of(this.context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Staff member added successfully')),
+                    SnackBar(content: Text(l10n.staffAddedSuccess)),
                   );
                 } catch (e) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $e')),
+                    SnackBar(content: Text('${l10n.error}: $e')),
                   );
                 }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF1976D2),
               ),
-              child: const Text('Add Staff'),
+              child: Text(l10n.addStaff),
             ),
           ],
         ),
@@ -339,6 +349,7 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
   }
 
   void _showEditStaffDialog(Map<String, dynamic> staff) {
+    final l10n = AppLocalizations.of(context)!;
     final nameController = TextEditingController(text: staff['name'] ?? '');
     String selectedRole = staff['role']?.toString() ?? 'operator';
 
@@ -346,14 +357,14 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Edit Staff Member'),
+          title: Text(l10n.editStaffMember),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Phone: ${staff['phone_number'] ?? ''}',
+                  l10n.phoneLabel(staff['phone_number'] ?? ''),
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey[600],
@@ -361,15 +372,16 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  'Name',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                Text(
+                  l10n.name,
+                  style: const TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: nameController,
                   decoration: InputDecoration(
-                    hintText: 'Enter name',
+                    hintText: l10n.enterName,
                     prefixIcon: const Icon(Icons.person),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -377,17 +389,18 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  'Role',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                Text(
+                  l10n.role,
+                  style: const TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 8),
                 _buildRoleOption(
                   setDialogState: setDialogState,
                   currentRole: selectedRole,
                   role: 'manager',
-                  title: 'Manager',
-                  subtitle: 'Full access',
+                  title: l10n.manager,
+                  subtitle: l10n.fullAccess,
                   icon: Icons.admin_panel_settings,
                   color: const Color(0xFF1976D2),
                   onSelect: () =>
@@ -398,8 +411,8 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
                   setDialogState: setDialogState,
                   currentRole: selectedRole,
                   role: 'operator',
-                  title: 'Operator',
-                  subtitle: 'Inward/Outward',
+                  title: l10n.operator,
+                  subtitle: l10n.inwardOutward,
                   icon: Icons.work,
                   color: const Color(0xFF4CAF50),
                   onSelect: () =>
@@ -410,8 +423,8 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
                   setDialogState: setDialogState,
                   currentRole: selectedRole,
                   role: 'technician',
-                  title: 'Technician',
-                  subtitle: 'Temperature',
+                  title: l10n.technician,
+                  subtitle: l10n.temperature,
                   icon: Icons.thermostat,
                   color: const Color(0xFFFF9800),
                   onSelect: () =>
@@ -423,7 +436,7 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: Text(l10n.cancel),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -436,17 +449,17 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
                   Navigator.pop(context);
                   _loadStaff();
                   ScaffoldMessenger.of(this.context).showSnackBar(
-                    const SnackBar(content: Text('Staff updated successfully')),
+                    SnackBar(content: Text(l10n.staffUpdatedSuccess)),
                   );
                 } catch (e) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $e')),
+                    SnackBar(content: Text('${l10n.error}: $e')),
                   );
                 }
               },
               style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1976D2)),
-              child: const Text('Save Changes'),
+              child: Text(l10n.saveChanges),
             ),
           ],
         ),
@@ -456,6 +469,7 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final managers = _getStaffByRole('manager');
     final operators = _getStaffByRole('operator');
     final technicians = _getStaffByRole('technician');
@@ -489,21 +503,21 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
                         const Icon(Icons.people, color: Colors.white, size: 24),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Staff Management',
-                          style: TextStyle(
+                          l10n.staffManagement,
+                          style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
                         ),
                         Text(
-                          'Manage managers & staff',
-                          style: TextStyle(
+                          l10n.manageManagersStaff,
+                          style: const TextStyle(
                             fontSize: 14,
                             color: Colors.white70,
                           ),
@@ -524,8 +538,8 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
-                    child: const Text('Logout',
-                        style: TextStyle(fontWeight: FontWeight.w600)),
+                    child: Text(l10n.logout,
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
                   ),
                 ],
               ),
@@ -546,7 +560,7 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
                             child: ElevatedButton.icon(
                               onPressed: _showAddStaffDialog,
                               icon: const Icon(Icons.person_add, size: 20),
-                              label: const Text('Add New Staff Member'),
+                              label: Text(l10n.addNewStaffMember),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF4CAF50),
                                 foregroundColor: Colors.white,
@@ -563,8 +577,8 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
 
                           // Managers Section
                           _buildStaffSection(
-                            title: 'Managers',
-                            subtitle: 'Can manage storage operations',
+                            title: l10n.managers,
+                            subtitle: l10n.canManageOperations,
                             icon: Icons.admin_panel_settings,
                             iconColor: const Color(0xFF1976D2),
                             staff: managers,
@@ -574,8 +588,8 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
 
                           // Operators Section
                           _buildStaffSection(
-                            title: 'Operators',
-                            subtitle: 'Inward/Outward operations',
+                            title: l10n.operators,
+                            subtitle: l10n.inwardOutwardOps,
                             icon: Icons.work,
                             iconColor: const Color(0xFF4CAF50),
                             staff: operators,
@@ -585,8 +599,8 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
 
                           // Technicians Section
                           _buildStaffSection(
-                            title: 'Technicians',
-                            subtitle: 'Temperature monitoring',
+                            title: l10n.technicians,
+                            subtitle: l10n.tempMonitoring,
                             icon: Icons.thermostat,
                             iconColor: const Color(0xFFFF9800),
                             staff: technicians,
@@ -608,6 +622,7 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
     required Color iconColor,
     required List<Map<String, dynamic>> staff,
   }) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -656,7 +671,7 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
             ),
             child: Center(
               child: Text(
-                'No ${title.toLowerCase()} added yet',
+                l10n.noRoleAddedYet(title.toLowerCase()),
                 style: TextStyle(color: Colors.grey[600]),
               ),
             ),
@@ -668,6 +683,7 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
   }
 
   Widget _buildStaffCard(Map<String, dynamic> staff, Color accentColor) {
+    final l10n = AppLocalizations.of(context)!;
     final isActive = staff['is_active'] == true;
     final name = staff['name']?.toString() ?? 'Unknown';
     final phone = staff['phone_number']?.toString() ?? '';
@@ -741,7 +757,7 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
-                        isActive ? 'Active' : 'Disabled',
+                        isActive ? l10n.active : l10n.disabled,
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -768,14 +784,15 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
           PopupMenuButton<String>(
             icon: Icon(Icons.more_vert, color: Colors.grey[600]),
             itemBuilder: (context) => [
-              const PopupMenuItem(value: 'edit', child: Text('Edit')),
+              PopupMenuItem(value: 'edit', child: Text(l10n.edit)),
               PopupMenuItem(
                 value: 'toggle',
-                child: Text(isActive ? 'Disable' : 'Enable'),
+                child: Text(isActive ? l10n.disable : l10n.enable),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'delete',
-                child: Text('Delete', style: TextStyle(color: Colors.red)),
+                child: Text(l10n.delete,
+                    style: const TextStyle(color: Colors.red)),
               ),
             ],
             onSelected: (value) async {
@@ -791,26 +808,26 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
                   _loadStaff();
                 } catch (e) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $e')),
+                    SnackBar(content: Text('${l10n.error}: $e')),
                   );
                 }
               } else if (value == 'delete') {
                 final confirm = await showDialog<bool>(
                   context: context,
                   builder: (context) => AlertDialog(
-                    title: const Text('Delete Staff?'),
+                    title: Text(l10n.deleteStaff),
                     content: Text(
-                      'Are you sure you want to delete ${staff['name']}? This action cannot be undone.',
+                      l10n.deleteStaffConfirm(staff['name'] ?? ''),
                     ),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context, false),
-                        child: const Text('Cancel'),
+                        child: Text(l10n.cancel),
                       ),
                       TextButton(
                         onPressed: () => Navigator.pop(context, true),
-                        child: const Text('Delete',
-                            style: TextStyle(color: Colors.red)),
+                        child: Text(l10n.delete,
+                            style: const TextStyle(color: Colors.red)),
                       ),
                     ],
                   ),
@@ -824,14 +841,13 @@ class _OwnerStaffTabState extends State<OwnerStaffTab> {
                     _loadStaff();
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('Staff member deleted successfully')),
+                        SnackBar(content: Text(l10n.staffDeletedSuccess)),
                       );
                     }
                   } catch (e) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Error deleting staff: $e')),
+                        SnackBar(content: Text('${l10n.error}: $e')),
                       );
                     }
                   }

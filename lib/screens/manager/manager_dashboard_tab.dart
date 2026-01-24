@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../state/app_state.dart';
 
 class ManagerDashboardTab extends StatefulWidget {
@@ -56,8 +57,9 @@ class _ManagerDashboardTabState extends State<ManagerDashboardTab> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final appState = context.watch<AppState>();
-    final userName = appState.user?.name ?? 'Manager';
+    final userName = appState.user?.name ?? l10n.manager;
 
     // Extract stats from the new API response structure
     final stats = _dashboardData?['stats'] as Map<String, dynamic>?;
@@ -112,8 +114,8 @@ class _ManagerDashboardTabState extends State<ManagerDashboardTab> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Manager Dashboard',
+                        Text(
+                          l10n.managerDashboard,
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -121,7 +123,7 @@ class _ManagerDashboardTabState extends State<ManagerDashboardTab> {
                           ),
                         ),
                         Text(
-                          'Welcome, $userName',
+                          l10n.welcome(userName),
                           style: const TextStyle(
                             fontSize: 14,
                             color: Colors.white70,
@@ -131,7 +133,7 @@ class _ManagerDashboardTabState extends State<ManagerDashboardTab> {
                           Padding(
                             padding: const EdgeInsets.only(top: 4),
                             child: Text(
-                              'Storage: $storageNames',
+                              l10n.storageLabel(storageNames),
                               style: const TextStyle(
                                 fontSize: 13,
                                 color: Colors.white,
@@ -156,7 +158,7 @@ class _ManagerDashboardTabState extends State<ManagerDashboardTab> {
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
-                    child: const Text('Logout',
+                    child: Text(l10n.logout,
                         style: TextStyle(fontWeight: FontWeight.w600)),
                   ),
                 ],
@@ -183,7 +185,7 @@ class _ManagerDashboardTabState extends State<ManagerDashboardTab> {
                                           size: 80, color: Colors.grey[400]),
                                       const SizedBox(height: 16),
                                       Text(
-                                        'No Storage Assigned',
+                                        l10n.noStorageAssignedTitle,
                                         style: TextStyle(
                                           fontSize: 20,
                                           fontWeight: FontWeight.bold,
@@ -192,7 +194,7 @@ class _ManagerDashboardTabState extends State<ManagerDashboardTab> {
                                       ),
                                       const SizedBox(height: 8),
                                       Text(
-                                        'Please contact the owner to assign you a storage.',
+                                        l10n.contactOwnerMessage,
                                         style:
                                             TextStyle(color: Colors.grey[600]),
                                       ),
@@ -211,10 +213,10 @@ class _ManagerDashboardTabState extends State<ManagerDashboardTab> {
                                       child: _buildStatCard(
                                         icon: Icons.check_circle_outline,
                                         iconColor: const Color(0xFF4CAF50),
-                                        title: 'Available',
+                                        title: l10n.available,
                                         value:
                                             '${available.toStringAsFixed(0)}',
-                                        unit: 'MT',
+                                        unit: l10n.mt,
                                       ),
                                     ),
                                     const SizedBox(width: 12),
@@ -222,9 +224,9 @@ class _ManagerDashboardTabState extends State<ManagerDashboardTab> {
                                       child: _buildStatCard(
                                         icon: Icons.trending_up,
                                         iconColor: const Color(0xFFFF9800),
-                                        title: 'Occupied',
+                                        title: l10n.occupied,
                                         value: '${occupied.toStringAsFixed(0)}',
-                                        unit: 'MT',
+                                        unit: l10n.mt,
                                         valueColor: const Color(0xFFFF9800),
                                       ),
                                     ),
@@ -243,8 +245,9 @@ class _ManagerDashboardTabState extends State<ManagerDashboardTab> {
                                   icon: Icons.description,
                                   iconBgColor: const Color(0xFFFFF3E0),
                                   iconColor: const Color(0xFFFF9800),
-                                  title: 'Active Bookings',
-                                  subtitle: '$activeBookings active entries',
+                                  title: l10n.activeBookings,
+                                  subtitle: l10n.activeEntriesCount(
+                                      activeBookings as int),
                                   badge: activeBookings as int,
                                   badgeColor: const Color(0xFFFF9800),
                                   onTap: () {
@@ -259,8 +262,8 @@ class _ManagerDashboardTabState extends State<ManagerDashboardTab> {
                                   icon: Icons.inventory_2,
                                   iconBgColor: const Color(0xFFE3F2FD),
                                   iconColor: const Color(0xFF1976D2),
-                                  title: 'Inventory Summary',
-                                  subtitle: 'View stored crops',
+                                  title: l10n.inventorySummary,
+                                  subtitle: l10n.viewStoredCrops,
                                   onTap: () {
                                     // Navigate to Inventory tab (index 2)
                                     widget.onNavigateToTab(2);
@@ -273,8 +276,9 @@ class _ManagerDashboardTabState extends State<ManagerDashboardTab> {
                                   icon: Icons.warning_amber,
                                   iconBgColor: const Color(0xFFFFEBEE),
                                   iconColor: const Color(0xFFF44336),
-                                  title: 'Temperature Alerts',
-                                  subtitle: '$activeAlerts alerts active',
+                                  title: l10n.temperatureAlerts,
+                                  subtitle: l10n
+                                      .alertsActiveCount(activeAlerts as int),
                                   badge: activeAlerts as int,
                                   badgeColor: const Color(0xFFF44336),
                                   onTap: () {
@@ -289,8 +293,9 @@ class _ManagerDashboardTabState extends State<ManagerDashboardTab> {
                                   icon: Icons.people,
                                   iconBgColor: const Color(0xFFE8F5E9),
                                   iconColor: const Color(0xFF4CAF50),
-                                  title: 'Staff Management',
-                                  subtitle: '$staffCount team members',
+                                  title: l10n.staffManagement,
+                                  subtitle:
+                                      l10n.teamMembersCount(staffCount as int),
                                   onTap: () {
                                     // Navigate to Staff tab (index 3)
                                     widget.onNavigateToTab(3);
@@ -366,6 +371,7 @@ class _ManagerDashboardTabState extends State<ManagerDashboardTab> {
   }
 
   Widget _buildPendingCard(int activeBookings) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -388,7 +394,7 @@ class _ManagerDashboardTabState extends State<ManagerDashboardTab> {
               Icon(Icons.access_time, color: Colors.grey[500], size: 18),
               const SizedBox(width: 6),
               Text(
-                'Pending Requests',
+                l10n.pendingRequests,
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.grey[600],
@@ -406,7 +412,7 @@ class _ManagerDashboardTabState extends State<ManagerDashboardTab> {
             ),
           ),
           Text(
-            'Awaiting approval',
+            l10n.awaitingApproval,
             style: TextStyle(
               fontSize: 14,
               color: Colors.grey[500],
